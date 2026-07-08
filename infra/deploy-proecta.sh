@@ -363,6 +363,12 @@ fi
 sudo mkdir -p /opt/liverscreening-ml-api
 sudo chown www-data:www-data /opt/liverscreening-ml-api
 
+if ! python3 -m venv /tmp/venv-check >/dev/null 2>&1; then
+  echo "Installing python3-venv for ML API..."
+  sudo apt-get install -y python3-venv python3.12-venv
+  rm -rf /tmp/venv-check
+fi
+
 echo "Setting up ML API venv..."
 cd "${REPO_ROOT}/services/ml-api"
 if [ ! -d "$ML_API_VENV" ]; then
