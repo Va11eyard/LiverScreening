@@ -1,0 +1,9 @@
+{
+  "name": "liverscreening",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter hepatoscreen-ml-lab dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:ml-lab": "pnpm --filter hepatoscreen-ml-lab dev"
+  }
+}

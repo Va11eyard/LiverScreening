@@ -1,0 +1,267 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+@import "tw-animate-css";
+@import "react-day-picker/style.css";
+@import "shadcn/tailwind.css";
+
+@keyframes explain-draw {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes explain-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.explain-region-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: explain-draw 1.2s ease-in-out forwards;
+}
+
+.explain-region-pulse {
+  animation: explain-pulse 1.5s ease-in-out infinite;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono-stack);
+  --font-heading: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-hub-heading: var(--odos-hub-heading);
+  --color-hub-body: var(--odos-hub-body);
+  --color-hub-muted: var(--odos-hub-muted);
+  --color-hub-cta: var(--odos-hub-cta);
+  --color-hub-navy: var(--odos-hub-navy);
+  --color-hub-page: var(--odos-hub-page-bg);
+  --color-hub-selected: var(--odos-hub-selected-bg);
+  --color-auth-cta: var(--odos-auth-cta);
+  --color-auth-tint: var(--odos-auth-cta-tint);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-surface: var(--odos-surface-1);
+  --color-success: var(--odos-success);
+  --color-warning: var(--odos-warning);
+  --color-danger: var(--odos-danger);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: calc(var(--radius-lg) + 4px);
+  --radius-2xl: calc(var(--radius-lg) + 8px);
+  --radius-3xl: calc(var(--radius-lg) + 16px);
+  --radius-4xl: calc(var(--radius-lg) + 24px);
+  --radius-card-sm: var(--radius-card-sm);
+  --radius-card-md: var(--radius-card-md);
+  --radius-card-lg: var(--radius-card-lg);
+}
+
+:root {
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono-stack: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+
+  --text-xs: clamp(0.6875rem, 0.666rem + 0.06vw, 0.75rem);
+  --text-sm: clamp(0.8125rem, 0.765rem + 0.1vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.82rem + 0.14vw, 1rem);
+  --text-lg: clamp(1rem, 0.94rem + 0.18vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1.02rem + 0.22vw, 1.25rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-13: 3.25rem;
+  --space-14: 3.5rem;
+  --space-15: 3.75rem;
+  --space-16: 4rem;
+  --space-17: 4.25rem;
+  --space-18: 4.5rem;
+  --space-19: 4.75rem;
+  --space-20: 5rem;
+  --space-21: 5.25rem;
+  --space-22: 5.5rem;
+  --space-23: 5.75rem;
+  --space-24: 6rem;
+  --space-25: 6.25rem;
+  --space-26: 6.5rem;
+  --space-27: 6.75rem;
+  --space-28: 7rem;
+  --space-29: 7.25rem;
+  --space-30: 7.5rem;
+  --space-31: 7.75rem;
+  --space-32: 8rem;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  --radius: var(--radius-lg);
+  --radius-card-sm: 15px;
+  --radius-card-md: 20px;
+  --radius-card-lg: 24px;
+
+  --odos-bg: oklch(0.985 0.006 82);
+  --odos-surface-1: oklch(0.978 0.008 80);
+  --odos-surface-2: oklch(0.965 0.01 78);
+  --odos-surface-3: oklch(0.948 0.012 76);
+  --odos-surface-offset: oklch(0.928 0.014 74);
+
+  --odos-primary: #1a6b8a;
+  --odos-primary-foreground: oklch(0.99 0.01 230);
+
+  --odos-text-primary: #1a1a1a;
+  --odos-text-muted: #6b7280;
+  --odos-text-faint: oklch(0.58 0.02 245);
+
+  --odos-success: #437a22;
+  --odos-warning: #b07a00;
+  --odos-danger: #a12c3b;
+
+  --odos-border-channel: oklch(0.35 0.04 250);
+  --odos-border: color-mix(in oklch, var(--odos-border-channel) 14%, transparent);
+  --odos-border-subtle: color-mix(in oklch, var(--odos-border-channel) 8%, transparent);
+
+  --odos-hub-heading: #141c2e;
+  --odos-hub-body: #1a2b3c;
+  --odos-hub-muted: #717171;
+  --odos-hub-cta: #0c9cde;
+  --odos-hub-cta-light: #0eb5d8;
+  --odos-hub-navy: #1e2a4a;
+  --odos-hub-selected-bg: #e8f4fd;
+  --odos-hub-profile-bg: #e8f4fd;
+  --odos-hub-profile-bg-hover: #d6ecfa;
+  --odos-hub-page-bg: #f5f6f8;
+  --odos-hub-divider: #f0f0f0;
+
+  --odos-auth-cta: #2f6bff;
+  --odos-auth-cta-tint: #e8f0ff;
+  --odos-auth-page-bg: #f3f4f6;
+
+  --odos-input-border: #e5e7eb;
+  --odos-input-placeholder: #9ca3af;
+  --odos-input-bg-subtle: #f9fafb;
+
+  --odos-badge-success: #13992a;
+  --odos-badge-success-bg: rgba(19, 153, 42, 0.1);
+  --odos-badge-warning-text: #d97706;
+  --odos-badge-warning-bg: rgba(254, 243, 199, 0.7);
+
+  --odos-risk-high: #ea5455;
+  --odos-risk-high-tint: rgba(234, 84, 85, 0.12);
+  --odos-risk-low: #28c76f;
+  --odos-risk-low-bg: #e8f9ee;
+
+  --odos-shadow-color: oklch(0.35 0.03 250 / 0.09);
+  --shadow-xs: 0 1px 2px var(--odos-shadow-color);
+  --shadow-auth-card: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --shadow-hub-cta: 0px 10px 10px 0px rgba(20, 28, 46, 0.1);
+  --shadow-results-card: 0px 4px 24px rgba(20, 28, 46, 0.06);
+
+  --background: var(--odos-bg);
+  --foreground: var(--odos-text-primary);
+  --card: var(--odos-surface-1);
+  --card-foreground: var(--odos-text-primary);
+  --popover: var(--odos-surface-2);
+  --popover-foreground: var(--odos-text-primary);
+  --primary: var(--odos-primary);
+  --primary-foreground: var(--odos-primary-foreground);
+  --secondary: var(--odos-surface-3);
+  --secondary-foreground: var(--odos-text-primary);
+  --muted: var(--odos-surface-2);
+  --muted-foreground: var(--odos-text-muted);
+  --accent: var(--odos-surface-offset);
+  --accent-foreground: var(--odos-text-primary);
+  --destructive: var(--odos-danger);
+  --border: var(--odos-border);
+  --input: var(--odos-border-subtle);
+  --ring: color-mix(in oklch, var(--odos-primary) 42%, transparent);
+
+  --chart-1: var(--odos-hub-cta);
+  --chart-2: var(--odos-success);
+  --chart-3: var(--odos-warning);
+  --chart-4: var(--odos-danger);
+  --chart-5: var(--odos-hub-navy);
+  --sidebar: var(--odos-hub-page-bg);
+  --sidebar-foreground: var(--odos-hub-heading);
+  --sidebar-primary: var(--odos-hub-cta);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--odos-hub-selected-bg);
+  --sidebar-accent-foreground: var(--odos-hub-heading);
+  --sidebar-border: var(--odos-border);
+  --sidebar-ring: color-mix(in oklch, var(--odos-hub-cta) 42%, transparent);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply antialiased;
+    font-family: var(--font-body);
+  }
+  body {
+    @apply bg-background text-foreground h-dvh overflow-hidden;
+    font-size: var(--text-base);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+  button:not(:disabled),
+  [data-slot="button"]:not(:disabled),
+  [data-slot="select-trigger"]:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+}

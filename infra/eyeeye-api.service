@@ -1,0 +1,15 @@
+[Unit]
+Description=EyeEye Go API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/eyeeye-api
+EnvironmentFile=/opt/eyeeye-api/.env
+ExecStart=/opt/eyeeye-api/eyeeye-api
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

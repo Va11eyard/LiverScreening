@@ -1,0 +1,15 @@
+[Unit]
+Description=EyeEye Next.js Frontend
+After=network.target eyeeye-api.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/eyeeye-web
+EnvironmentFile=/opt/eyeeye-web/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

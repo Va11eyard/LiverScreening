@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: liverscreening-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: liver
+      POSTGRES_PASSWORD: liver
+      POSTGRES_DB: liver
+    ports:
+      - "5435:5432"
+    volumes:
+      - liver_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liver -d liver"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ml-api:
+    build:
+      context: ./services/ml-api
+      dockerfile: Dockerfile
+    container_name: liverscreening-ml-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: liverscreening-api
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://liver:liver@postgres:5432/liver?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-dev-change-me-in-production}
+      CORS_ALLOWED_ORIGINS: http://localhost:3004
+      SEED_ADMIN_EMAIL: coordinator@liver.kz
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMe123!}
+      SEED_DOCTOR_PASSWORD: ${SEED_DOCTOR_PASSWORD:-Doctor123!}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-127.0.0.1,::1}
+      API_RATE_LIMIT_MAX: ${API_RATE_LIMIT_MAX:-120}
+      REFRESH_RATE_LIMIT_MAX: ${REFRESH_RATE_LIMIT_MAX:-20}
+      UPLOAD_DIR: /data/uploads
+      AI_INFERENCE_URL: ${AI_INFERENCE_URL:-http://ml-api:8000/inference}
+      AI_INFERENCE_ALLOW_HTTP: "true"
+      AI_INFERENCE_API_KEY: ${AI_INFERENCE_API_KEY:-}
+      AI_INFERENCE_TIMEOUT: ${AI_INFERENCE_TIMEOUT:-60s}
+      EXCEL_EXPORT_ENABLED: ${EXCEL_EXPORT_ENABLED:-false}
+      EXCEL_EXPORT_CRON: ${EXCEL_EXPORT_CRON:-0 8 * * 1}
+      EXCEL_EXPORT_DIR: /data/exports/weekly
+    ports:
+      - "8088:8080"
+    volumes:
+      - liver_uploads:/data/uploads
+      - liver_exports:/data/exports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml-api:
+        condition: service_healthy
+
+volumes:
+  liver_pgdata:
+  liver_uploads:
+  liver_exports:

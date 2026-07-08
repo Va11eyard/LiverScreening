@@ -1,0 +1,243 @@
+openapi: 3.1.0
+info:
+  title: Eye Eye AI Pilot API
+  version: 1.0.0
+  description: ROP screening pilot API. Browser clients use Next.js /api/proxy with session cookies.
+servers:
+  - url: https://eye-eye.ropca.kz/api/v1
+    description: Production (via nginx → web proxy)
+  - url: http://localhost:8088/api/v1
+    description: Local API (direct)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          maxLength: 200
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        password:
+          type: string
+          format: password
+          maxLength: 128
+security:
+  - bearerAuth: []
+paths:
+  /healthz:
+    get:
+      security: []
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /auth/login:
+    post:
+      security: []
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Tokens and user profile
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limited
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+  /auth/refresh:
+    post:
+      security: []
+      summary: Refresh access token
+      responses:
+        "200":
+          description: New token pair
+        "401":
+          description: Invalid refresh token
+        "429":
+          description: Rate limited
+  /cases:
+    get:
+      summary: List cases (doctor sees own only)
+      parameters:
+        - name: hospital
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Case list
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create case
+      responses:
+        "201":
+          description: Created
+  /cases/{caseId}:
+    get:
+      summary: Get case with images and AI snapshot
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+      responses:
+        "200":
+          description: Case detail
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      summary: Soft-delete case and all images (doctor, own case)
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+      responses:
+        "204":
+          description: Soft-deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+  /cases/{caseId}/images:
+    post:
+      summary: Upload images (multipart field images, max 20 files × 20MB)
+      responses:
+        "201":
+          description: Upload result with optional AI block
+        "400":
+          description: Validation error
+        "413":
+          description: Request too large
+    get:
+      summary: List case images
+      responses:
+        "200":
+          description: Image metadata list
+  /cases/{caseId}/images/{imageId}:
+    delete:
+      summary: Soft-delete image (doctor, own case; file retained on server)
+      responses:
+        "204":
+          description: Deleted
+  /cases/{caseId}/images/archive:
+    get:
+      summary: Download ZIP (coordinator/admin)
+      responses:
+        "200":
+          description: ZIP archive
+        "403":
+          description: Forbidden
+  /cases/{caseId}/images/{imageId}/file:
+    get:
+      summary: Serve image file (inline or ?download=1 attachment)
+      parameters:
+        - name: download
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+      responses:
+        "200":
+          description: Image bytes
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+  /surveys:
+    get:
+      summary: List surveys (doctor sees own only)
+      responses:
+        "200":
+          description: Survey list
+    post:
+      summary: Submit survey
+      responses:
+        "201":
+          description: Created
+  /reports/weekly:
+    get:
+      summary: Weekly report rows
+      responses:
+        "200":
+          description: Report data
+  /reports/excel:
+    get:
+      summary: Full Excel export (coordinator/admin)
+      responses:
+        "200":
+          description: XLSX file
+        "403":
+          description: Forbidden
+  /reports/exports:
+    get:
+      summary: List archived scheduled Excel exports (coordinator/admin)
+      responses:
+        "200":
+          description: List of export files
+        "403":
+          description: Forbidden
+  /reports/exports/{filename}:
+    get:
+      summary: Download archived Excel export (coordinator/admin)
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: XLSX file
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
