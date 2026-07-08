@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 export PATH="/usr/local/go/bin:$PATH"
+export CI=true
 
 sudo mkdir -p /opt/liverscreening-api /opt/liverscreening-web /opt/liverscreening-data/uploads /var/log/liverscreening
 sudo chown ubuntu:ubuntu /opt/liverscreening-api /opt/liverscreening-web
@@ -179,6 +180,30 @@ verify_web_release() {
   WEB_PORT="$port" WEB_URL="http://127.0.0.1:${port}" SMOKE_FULL_LOGIN="${3:-0}" bash "${REPO_ROOT}/infra/smoke-web-auth.sh"
 }
 
+run_proxy_smoke() {
+  local web_url="$1"
+  local label="$2"
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if sudo -u ubuntu env \
+      WEB_URL="$web_url" \
+      TEST_EMAIL=doctor@liver.kz \
+      TEST_PASSWORD="$SEED_DOCTOR_PASSWORD" \
+      bash "${REPO_ROOT}/infra/verify-proxy-auth.sh" && \
+      sudo -u ubuntu env \
+      WEB_URL="$web_url" \
+      TEST_EMAIL=doctor@liver.kz \
+      TEST_PASSWORD="$SEED_DOCTOR_PASSWORD" \
+      bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
+      echo "OK: proxy smoke passed (${label})"
+      return 0
+    fi
+    echo "Proxy verify attempt ${attempt}/5 failed for ${label}, retrying..." >&2
+    sleep 3
+  done
+  return 1
+}
+
 STANDALONE_ROOT=/opt/liverscreening-src/apps/web/.next/standalone
 STANDALONE_APP="${STANDALONE_ROOT}/apps/web"
 if [ ! -f "${STANDALONE_APP}/server.js" ]; then
@@ -228,6 +253,11 @@ fi
 if ! verify_web_release "$STAGING_PORT" "staging" 0; then
   stop_staging_web
   echo "ERROR: staging verification failed — production web unchanged" >&2
+  exit 1
+fi
+if ! run_proxy_smoke "http://127.0.0.1:${STAGING_PORT}" "staging"; then
+  stop_staging_web
+  echo "ERROR: staging proxy verification failed — production web unchanged" >&2
   exit 1
 fi
 stop_staging_web
@@ -299,15 +329,8 @@ if ! verify_web_release "$PROD_PORT" "production" 0; then
 fi
 
 echo "Running end-to-end proxy verification..."
-export TEST_EMAIL=doctor@liver.kz
-export TEST_PASSWORD="$SEED_DOCTOR_PASSWORD"
-if ! WEB_URL="http://127.0.0.1:${PROD_PORT}" bash "${REPO_ROOT}/infra/verify-proxy-auth.sh"; then
-  echo "ERROR: verify-proxy-auth failed" >&2
-  rollback_web
-  exit 1
-fi
-if ! WEB_URL="http://127.0.0.1:${PROD_PORT}" TEST_EMAIL=doctor@liver.kz TEST_PASSWORD="$SEED_DOCTOR_PASSWORD" bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
-  echo "ERROR: verify-proxy-upload failed" >&2
+if ! run_proxy_smoke "http://127.0.0.1:${PROD_PORT}" "production"; then
+  echo "ERROR: production proxy verification failed" >&2
   rollback_web
   exit 1
 fi
