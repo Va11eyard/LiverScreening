@@ -108,7 +108,10 @@ sleep 1
 
 echo "Syncing pilot users (metadata only; passwords unchanged unless SEED_ROTATE_PASSWORDS=1)..."
 set -a
-eval "$(sudo grep -v '^#' /opt/liverscreening-api/.env | sed 's/^/export /')"
+export SEED_ADMIN_PASSWORD="$(sudo grep -m1 '^SEED_ADMIN_PASSWORD=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export SEED_ADMIN_EMAIL="$(sudo grep -m1 '^SEED_ADMIN_EMAIL=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export DATABASE_URL="$(sudo grep -m1 '^DATABASE_URL=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export SEED_DOCTOR_PASSWORD="$(sudo grep -m1 '^SEED_DOCTOR_PASSWORD=' /opt/liverscreening-api/.env | cut -d= -f2-)"
 set +a
 sudo -u ubuntu env PATH="$PATH" \
   DATABASE_URL="$DATABASE_URL" \
@@ -280,7 +283,10 @@ if ! curl -sf -o /dev/null http://127.0.0.1:8089/healthz; then
   exit 1
 fi
 set -a
-eval "$(sudo grep -v '^#' /opt/liverscreening-api/.env | sed 's/^/export /')"
+export SEED_ADMIN_PASSWORD="$(sudo grep -m1 '^SEED_ADMIN_PASSWORD=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export SEED_ADMIN_EMAIL="$(sudo grep -m1 '^SEED_ADMIN_EMAIL=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export DATABASE_URL="$(sudo grep -m1 '^DATABASE_URL=' /opt/liverscreening-api/.env | cut -d= -f2-)"
+export SEED_DOCTOR_PASSWORD="$(sudo grep -m1 '^SEED_DOCTOR_PASSWORD=' /opt/liverscreening-api/.env | cut -d= -f2-)"
 set +a
 if ! bash "${REPO_ROOT}/infra/verify-coordinator-login.sh"; then
   echo "ERROR: coordinator login does not match SEED_ADMIN_PASSWORD" >&2
@@ -293,12 +299,12 @@ if ! verify_web_release "$PROD_PORT" "production" 0; then
 fi
 
 echo "Running end-to-end proxy verification..."
-if ! bash "${REPO_ROOT}/infra/verify-proxy-auth.sh"; then
+if ! WEB_URL="http://platform.cornea.kz" bash "${REPO_ROOT}/infra/verify-proxy-auth.sh"; then
   echo "ERROR: verify-proxy-auth failed" >&2
   rollback_web
   exit 1
 fi
-if ! bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
+if ! WEB_URL="http://platform.cornea.kz" bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
   echo "ERROR: verify-proxy-upload failed" >&2
   rollback_web
   exit 1
@@ -368,5 +374,10 @@ for site in platform.cornea.kz ml.cornea.kz screening.cornea.kz; do
 done
 sudo nginx -t
 sudo systemctl reload nginx
+
+if command -v certbot >/dev/null 2>&1; then
+  sudo certbot --nginx -d platform.cornea.kz -d ml.cornea.kz -d screening.cornea.kz \
+    --non-interactive --agree-tos -m coordinator@liver.kz --redirect || true
+fi
 
 echo "LiverScreening full deploy complete (platform :3024, API :8089, ML API :8001)"
