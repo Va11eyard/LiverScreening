@@ -181,10 +181,16 @@ verify_web_release() {
   WEB_PORT="$port" WEB_URL="http://127.0.0.1:${port}" SMOKE_FULL_LOGIN="${3:-0}" bash "${REPO_ROOT}/infra/smoke-web-auth.sh"
 }
 
+STANDALONE_SRC=/opt/liverscreening-src/apps/web/.next/standalone/apps/web
+if [ ! -f "${STANDALONE_SRC}/server.js" ]; then
+  echo "ERROR: standalone server.js missing at ${STANDALONE_SRC}" >&2
+  exit 1
+fi
+
 echo "Assembling web release in staging..."
 sudo rm -rf "$WEB_STAGING"
 sudo mkdir -p "$WEB_STAGING/.next"
-sudo cp -r /opt/liverscreening-src/apps/web/.next/standalone/. "$WEB_STAGING/"
+sudo cp -r "${STANDALONE_SRC}/." "$WEB_STAGING/"
 sudo cp -r /opt/liverscreening-src/apps/web/.next/static "$WEB_STAGING/.next/"
 sudo cp -r /opt/liverscreening-src/apps/web/public "$WEB_STAGING/public" 2>/dev/null || true
 sudo chown -R www-data:www-data "$WEB_STAGING"
