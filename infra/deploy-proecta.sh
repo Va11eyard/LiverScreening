@@ -94,12 +94,7 @@ cd /opt/liverscreening-src
 sudo -u ubuntu env PATH="$PATH" CGO_ENABLED=0 go build -buildvcs=false -o /opt/liverscreening-api/liverscreening-api ./cmd/api
 
 echo "Running DB migrations..."
-set -a
-eval "$(sudo grep -v '^#' "$ENV_API" | sed 's/^/export /')"
-set +a
-sudo -u www-data env DATABASE_URL="$DATABASE_URL" JWT_SECRET="$JWT_SECRET" LISTEN_HOST=127.0.0.1 PORT=8089 \
-  UPLOAD_DIR=/opt/liverscreening-data/uploads APP_ENV=production \
-  /opt/liverscreening-api/liverscreening-api &
+sudo -u www-data bash -c "set -a && source '${ENV_API}' && set +a && /opt/liverscreening-api/liverscreening-api" &
 MIGRATE_PID=$!
 for _ in $(seq 1 30); do
   if curl -sf -o /dev/null http://127.0.0.1:8089/healthz 2>/dev/null; then
@@ -266,6 +261,13 @@ if ! sudo grep -q '^AUTH_SECRET=.' "$WEB_ROOT/.env"; then
   exit 1
 fi
 
+echo "Installing systemd units (liverscreening only)..."
+sudo cp "${REPO_ROOT}/infra/liverscreening-api.service" /etc/systemd/system/
+sudo cp "${REPO_ROOT}/infra/liverscreening-web.service" /etc/systemd/system/
+sudo cp "${REPO_ROOT}/infra/liverscreening-ml-api.service" /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable liverscreening-api liverscreening-web liverscreening-ml-api
+
 echo "Restarting API..."
 sudo systemctl restart liverscreening-api
 sudo systemctl start liverscreening-web
@@ -324,14 +326,8 @@ if [ ! -f "$ML_API_ENV" ]; then
   echo 'PORT=8001' | sudo tee "$ML_API_ENV" >/dev/null
   echo 'APP_ENV=production' | sudo tee -a "$ML_API_ENV" >/dev/null
   sudo chmod 600 "$ML_API_ENV"
+  sudo chown www-data:www-data "$ML_API_ENV"
 fi
-
-echo "Installing systemd units (liverscreening only)..."
-sudo cp "${REPO_ROOT}/infra/liverscreening-api.service" /etc/systemd/system/
-sudo cp "${REPO_ROOT}/infra/liverscreening-web.service" /etc/systemd/system/
-sudo cp "${REPO_ROOT}/infra/liverscreening-ml-api.service" /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable liverscreening-api liverscreening-web liverscreening-ml-api
 
 echo "Setting up ML API venv..."
 cd "${REPO_ROOT}/services/ml-api"
