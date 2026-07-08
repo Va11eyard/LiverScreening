@@ -18,13 +18,18 @@ if [ "$CSRF_CODE" != "200" ]; then
   exit 1
 fi
 CSRF=$(python3 -c 'import json; print(json.load(open("/tmp/proxy-csrf.json"))["csrfToken"])')
-curl -s -b "$COOKIE" -c "$COOKIE" -L -X POST "$WEB/api/auth/callback/credentials" \
+curl -s -b "$COOKIE" -c "$COOKIE" -X POST "$WEB/api/auth/callback/credentials" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "csrfToken=$CSRF" \
   --data-urlencode "email=$EMAIL" \
   --data-urlencode "password=$PASS" \
   --data-urlencode "callbackUrl=$WEB/cases" \
-  -o /dev/null
+  -o /dev/null -w "%{http_code}" > /tmp/proxy-login.code
+LOGIN_CODE=$(cat /tmp/proxy-login.code)
+if [ "$LOGIN_CODE" != "200" ] && [ "$LOGIN_CODE" != "302" ] && [ "$LOGIN_CODE" != "303" ]; then
+  echo "FAIL: credentials callback returned HTTP ${LOGIN_CODE}" >&2
+  exit 1
+fi
 
 SESSION=$(curl -s -b "$COOKIE" "$WEB/api/auth/session" || true)
 if ! echo "$SESSION" | python3 -c 'import sys,json; s=json.load(sys.stdin); exit(0 if s.get("user") else 1)' 2>/dev/null; then

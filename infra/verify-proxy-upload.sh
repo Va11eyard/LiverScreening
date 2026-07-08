@@ -11,14 +11,23 @@ PNG=$(mktemp --suffix=.png)
 cleanup() { rm -f "$COOKIE" "$PNG" /tmp/upload-resp.json; }
 trap cleanup EXIT
 
-CSRF=$(curl -s -c "$COOKIE" "$WEB/api/auth/csrf" | python3 -c 'import sys,json; print(json.load(sys.stdin)["csrfToken"])')
-curl -s -b "$COOKIE" -c "$COOKIE" -L -X POST "$WEB/api/auth/callback/credentials" \
+CSRF_CODE=$(curl -s -b "$COOKIE" -c "$COOKIE" -o /tmp/upload-csrf.json -w "%{http_code}" "$WEB/api/auth/csrf")
+if [ "$CSRF_CODE" != "200" ]; then
+  echo "FAIL: GET /api/auth/csrf returned HTTP ${CSRF_CODE}" >&2
+  exit 1
+fi
+CSRF=$(python3 -c 'import json; print(json.load(open("/tmp/upload-csrf.json"))["csrfToken"])')
+LOGIN_CODE=$(curl -s -b "$COOKIE" -c "$COOKIE" -X POST "$WEB/api/auth/callback/credentials" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "csrfToken=$CSRF" \
   --data-urlencode "email=$EMAIL" \
   --data-urlencode "password=$PASS" \
   --data-urlencode "callbackUrl=$WEB/cases" \
-  -o /dev/null
+  -o /dev/null -w "%{http_code}")
+if [ "$LOGIN_CODE" != "200" ] && [ "$LOGIN_CODE" != "302" ] && [ "$LOGIN_CODE" != "303" ]; then
+  echo "FAIL: credentials callback returned HTTP ${LOGIN_CODE}" >&2
+  exit 1
+fi
 
 python3 -c '
 import struct, zlib, sys
