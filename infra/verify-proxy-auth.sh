@@ -11,7 +11,13 @@ PNG=$(mktemp --suffix=.png)
 cleanup() { rm -f "$COOKIE" "$PNG" /tmp/case-resp.json; }
 trap cleanup EXIT
 
-CSRF=$(curl -s -c "$COOKIE" "$WEB/api/auth/csrf" | python3 -c 'import sys,json; print(json.load(sys.stdin)["csrfToken"])')
+CSRF_CODE=$(curl -s -b "$COOKIE" -c "$COOKIE" -o /tmp/proxy-csrf.json -w "%{http_code}" "$WEB/api/auth/csrf")
+if [ "$CSRF_CODE" != "200" ]; then
+  echo "FAIL: GET /api/auth/csrf returned HTTP ${CSRF_CODE}" >&2
+  cat /tmp/proxy-csrf.json >&2
+  exit 1
+fi
+CSRF=$(python3 -c 'import json; print(json.load(open("/tmp/proxy-csrf.json"))["csrfToken"])')
 curl -s -b "$COOKIE" -c "$COOKIE" -L -X POST "$WEB/api/auth/callback/credentials" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "csrfToken=$CSRF" \
@@ -44,7 +50,7 @@ open(path, "wb").write(
 )
 ' "$PNG"
 
-CASE_JSON='{"date":"2026-07-02","hospital":"Астана ГКП на ПХВ «Многопрофильная больница №2»","doctor":"Verify","motherSurname":"Test","childSurname":"Baby","stage":"Ст. 1"}'
+CASE_JSON='{"date":"2026-07-02","hospital":"ПМСП №1 г. Астана","doctor":"Verify","motherSurname":"Test","childSurname":"Patient","stage":"F2"}'
 
 CODE=$(curl -s -b "$COOKIE" -o /tmp/case-resp.json -w "%{http_code}" -X POST "$WEB/api/proxy/cases" \
   -F "data=${CASE_JSON};type=application/json" \

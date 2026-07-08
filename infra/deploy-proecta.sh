@@ -299,12 +299,14 @@ if ! verify_web_release "$PROD_PORT" "production" 0; then
 fi
 
 echo "Running end-to-end proxy verification..."
+export TEST_EMAIL=doctor@liver.kz
+export TEST_PASSWORD="$SEED_DOCTOR_PASSWORD"
 if ! WEB_URL="http://127.0.0.1:${PROD_PORT}" bash "${REPO_ROOT}/infra/verify-proxy-auth.sh"; then
   echo "ERROR: verify-proxy-auth failed" >&2
   rollback_web
   exit 1
 fi
-if ! WEB_URL="http://127.0.0.1:${PROD_PORT}" bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
+if ! WEB_URL="http://127.0.0.1:${PROD_PORT}" TEST_EMAIL=doctor@liver.kz TEST_PASSWORD="$SEED_DOCTOR_PASSWORD" bash "${REPO_ROOT}/infra/verify-proxy-upload.sh"; then
   echo "ERROR: verify-proxy-upload failed" >&2
   rollback_web
   exit 1

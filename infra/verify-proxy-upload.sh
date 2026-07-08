@@ -34,7 +34,7 @@ open(path, "wb").write(
 )
 ' "$PNG"
 
-CASE_JSON='{"date":"2026-07-02","hospital":"Test","doctor":"Verify","motherSurname":"Img","childSurname":"Test","stage":"Ст. 1"}'
+CASE_JSON='{"date":"2026-07-02","hospital":"ПМСП №1 г. Астана","doctor":"Verify","motherSurname":"Img","childSurname":"Test","stage":"F2"}'
 
 CASE_ID=$(curl -s -b "$COOKIE" -X POST "$WEB/api/proxy/cases" \
   -F "data=${CASE_JSON};type=application/json" \
