@@ -1,0 +1,15 @@
+[Unit]
+Description=LiverScreening Go API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/liverscreening-api
+EnvironmentFile=/opt/liverscreening-api/.env
+ExecStart=/opt/liverscreening-api/liverscreening-api
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

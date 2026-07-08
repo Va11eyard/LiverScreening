@@ -1,6 +1,6 @@
 # Archived reference code (retinopathy pipeline)
 docs/*
-!docs/hepatoscreen/
+!docs/liverscreen/
 
 # Dependencies
 node_modules/
@@ -53,4 +53,5 @@ npm-debug.log*
 *.sqlite
 
 # Docker volumes
-postgres_data/
+*.tsbuildinfo
+services/ml-api/training/logs_*.txt

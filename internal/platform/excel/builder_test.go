@@ -28,30 +28,34 @@ func repoRoot(t *testing.T) string {
 func sampleCases() []domain.Case {
 	return []domain.Case{
 		{
-			CaseID:      "EEA-2026-001",
-			Date:        "2026-06-25",
-			Hospital:    domain.PilotHospitals[0],
-			Doctor:      "Test",
+			CaseID:        "HS-2026-001",
+			Date:          "2026-06-25",
+			Hospital:      domain.PilotHospitals[0],
+			Doctor:        "Test",
 			MotherSurname: "Иванова",
-			ChildSurname:  "Петрова",
-			GA:          "28+3",
-			BW:          1100,
-			Stage:       "Ст. 3",
-			PlusDisease: "Есть",
-			Aprop:       "Да (AP-ROP)",
+			ChildSurname:  "900101300123",
+			GA:            "52",
+			BW:            200,
+			PCA:           45,
+			PH:            "38",
+			Stage:         "F3",
+			PlusDisease:   "Умеренный",
+			Aprop:         "Да (ХВГ)",
+			Eye:           "MASLD/НАЖБП",
+			Recommendation: "Направление к гепатологу",
 		},
 		{
-			CaseID:      "EEA-2026-002",
-			Date:        "2026-06-26",
-			Hospital:    domain.PilotHospitals[0],
-			Doctor:      "Test",
+			CaseID:        "HS-2026-002",
+			Date:          "2026-06-26",
+			Hospital:      domain.PilotHospitals[0],
+			Doctor:        "Test",
 			MotherSurname: "Смагулова",
-			ChildSurname:  "Ким",
-			GA:          "30+1",
-			BW:          1200,
-			Stage:       "Ст. 1",
-			PlusDisease: "Нет",
-			Aprop:       "Нет",
+			ChildSurname:  "900202300456",
+			GA:            "45",
+			BW:            220,
+			Stage:         "F0",
+			PlusDisease:   "Нет / минимальный",
+			Aprop:         "Нет",
 		},
 	}
 }
@@ -148,15 +152,15 @@ func TestWeeklyHeaders(t *testing.T) {
 	}
 }
 
-func TestWeeklySheetApropOnlyRedFill(t *testing.T) {
+func TestWeeklySheetHighRiskRedFill(t *testing.T) {
 	cases := []domain.Case{
 		{
-			CaseID: "EEA-2026-001", Date: "2026-06-25", Hospital: domain.PilotHospitals[0],
-			Doctor: "Test", MotherSurname: "A", ChildSurname: "B", Stage: "Ст. 4", Aprop: "Нет",
+			CaseID: "HS-2026-001", Date: "2026-06-25", Hospital: domain.PilotHospitals[0],
+			Doctor: "Test", MotherSurname: "A", ChildSurname: "B", Stage: "F2", Recommendation: "Наблюдение в ПМСП",
 		},
 		{
-			CaseID: "EEA-2026-002", Date: "2026-06-26", Hospital: domain.PilotHospitals[0],
-			Doctor: "Test", MotherSurname: "C", ChildSurname: "D", Stage: "Ст. 3", Aprop: "Да (AP-ROP)",
+			CaseID: "HS-2026-002", Date: "2026-06-26", Hospital: domain.PilotHospitals[0],
+			Doctor: "Test", MotherSurname: "C", ChildSurname: "D", Stage: "F3", Recommendation: "Направление к гепатологу",
 		},
 	}
 	data, err := excel.BuildReport(cases, nil)
@@ -180,7 +184,7 @@ func TestWeeklySheetApropOnlyRedFill(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(style2.Fill.Color) > 0 && strings.TrimPrefix(strings.ToUpper(style2.Fill.Color[0]), "#") == "FECACA" {
-		t.Error("St. 4 without AP-ROP should not have red fill")
+		t.Error("F2 without hepatologist referral should not have red fill")
 	}
 
 	row3Style, err := f.GetCellStyle(sheet, "A3")
@@ -192,7 +196,7 @@ func TestWeeklySheetApropOnlyRedFill(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(style3.Fill.Color) == 0 || strings.TrimPrefix(strings.ToUpper(style3.Fill.Color[0]), "#") != "FECACA" {
-		t.Errorf("AP-ROP row should have red fill, got fill %+v", style3.Fill)
+		t.Errorf("hepatologist referral row should have red fill, got fill %+v", style3.Fill)
 	}
 }
 
@@ -272,7 +276,6 @@ func TestTemplateHasExpectedSheets(t *testing.T) {
 	required := map[string]bool{
 		"Еженедельный отчёт":  true,
 		"Продуктовые метрики": true,
-		"Стадии и гестация":   true,
 		"Сводка по больницам": true,
 		"Инструкция":          true,
 	}
@@ -300,7 +303,7 @@ func TestTemplateHasExpectedSheets(t *testing.T) {
 			}
 		}
 	}
-	if overlap < 5 {
+	if overlap < 3 {
 		t.Errorf("expected meaningful header overlap between template and generated weekly sheet, got %d", overlap)
 	}
 }

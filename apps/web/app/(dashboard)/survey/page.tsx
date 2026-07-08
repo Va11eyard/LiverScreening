@@ -90,7 +90,7 @@ export default function SurveyPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `HepatoScreen_Survey_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `LiverScreening_Survey_${new Date().toISOString().slice(0, 10)}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Excel скачан");

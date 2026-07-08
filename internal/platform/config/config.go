@@ -55,12 +55,12 @@ func Load() Config {
 	return Config{
 		ListenHost:         listenHost(),
 		Port:               envOr("PORT", "8080"),
-		DatabaseURL:        envOr("DATABASE_URL", "postgres://eyeeye:eyeeye@localhost:5434/eyeeye?sslmode=disable"),
+		DatabaseURL:        envOr("DATABASE_URL", "postgres://liver:liver@localhost:5435/liver?sslmode=disable"),
 		JWTSecret:          envOr("JWT_SECRET", "dev-change-me-in-production"),
 		CORSAllowedOrigins: origins,
 		AccessTokenTTL:     durationEnvOr("ACCESS_TOKEN_TTL", 15*time.Minute),
 		RefreshTokenTTL:    durationEnvOr("REFRESH_TOKEN_TTL", 7*24*time.Hour),
-		SeedAdminEmail:     envOr("SEED_ADMIN_EMAIL", "coordinator@eyeeye.kz"),
+		SeedAdminEmail:     envOr("SEED_ADMIN_EMAIL", "coordinator@liver.kz"),
 		SeedAdminPassword:  envOr("SEED_ADMIN_PASSWORD", "ChangeMe123!"),
 		SeedDoctorPassword:  envOr("SEED_DOCTOR_PASSWORD", DefaultSeedDoctorPassword),
 		SeedDoctorPasswordsFile: os.Getenv("SEED_DOCTOR_PASSWORDS_FILE"),
@@ -85,7 +85,7 @@ func auditLogPath() string {
 		return v
 	}
 	if IsProduction() {
-		return "/var/log/eyeeye/audit.jsonl"
+		return "/var/log/liverscreening/audit.jsonl"
 	}
 	return ""
 }

@@ -37,9 +37,17 @@ type ResultProps = {
   clinicalOnly?: boolean;
 };
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+    <div className={cn("rounded-xl border border-slate-100 bg-slate-50/80 p-4", className)}>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-lg font-semibold text-slate-900">{value}</p>
     </div>
@@ -63,7 +71,7 @@ export function ResultCard({ result, clinicalOnly }: ResultProps) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Результат анализа</CardTitle>
+          <CardTitle>{clinicalOnly ? "FIB-4 / APRI" : "Результат анализа"}</CardTitle>
           {tierStyle && (
             <span
               className={cn(
@@ -76,17 +84,30 @@ export function ResultCard({ result, clinicalOnly }: ResultProps) {
               {tierStyle.label}
             </span>
           )}
-          {result.model_loaded === true && (
+          {clinicalOnly && (
+            <Badge variant="default">Только клиника</Badge>
+          )}
+          {!clinicalOnly && result.model_loaded === true && (
             <Badge variant="success">Реальная модель</Badge>
           )}
-          {result.stub_mode === true && (
+          {!clinicalOnly && result.stub_mode === true && (
             <Badge variant="warning">Stub / нет весов</Badge>
           )}
         </div>
         {explanation?.summary && <CardDescription>{explanation.summary}</CardDescription>}
+        {!clinicalOnly && (
+          <p className="mt-2 text-xs text-slate-500">
+            Fusion score: клиника 0.7 + УЗИ 0.3 (FIB-4/APRI + vision-модель)
+          </p>
+        )}
       </CardHeader>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className={cn(
+          "mb-6 grid gap-3",
+          clinicalOnly ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
+        )}
+      >
         {!clinicalOnly && (
           <>
             <MetricCard label="Фиброз (F)" value={String(result.stage ?? "—")} />
@@ -96,13 +117,17 @@ export function ResultCard({ result, clinicalOnly }: ResultProps) {
         )}
         <MetricCard label="FIB-4" value={String(result.fib4 ?? "—")} />
         <MetricCard label="APRI" value={String(result.apri ?? "—")} />
-        <MetricCard label="Триаж" value={String(result.zone ?? result.recommendation ?? "—")} />
+        <MetricCard
+          label="Триаж"
+          value={String(result.zone ?? result.recommendation ?? "—")}
+          className={clinicalOnly ? "sm:col-span-2" : undefined}
+        />
         {!clinicalOnly && (
           <MetricCard label="Диагноз" value={String(result.pre_diag ?? "—")} />
         )}
       </div>
 
-      <ConfidenceMeter tier={tier} confidence={confidence} />
+      {!clinicalOnly && <ConfidenceMeter tier={tier} confidence={confidence} />}
 
       {explanation?.reasoning && explanation.reasoning.length > 0 && (
         <ul className="mt-6 space-y-2 border-t border-slate-100 pt-4">

@@ -1,0 +1,15 @@
+[Unit]
+Description=LiverScreening Next.js Frontend
+After=network.target liverscreening-api.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/liverscreening-web
+EnvironmentFile=/opt/liverscreening-web/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

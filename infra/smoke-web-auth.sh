@@ -1,13 +1,11 @@
 #!/bin/bash
-# Smoke-test Next.js auth routes on a local web port (session + CSRF; optional full login).
 set -euo pipefail
 
 WEB_PORT="${WEB_PORT:-3014}"
 BASE_URL="${WEB_URL:-http://127.0.0.1:${WEB_PORT}}"
-EMAIL="${TEST_EMAIL:-doctor@eyeeye.kz}"
+EMAIL="${TEST_EMAIL:-doctor@liver.kz}"
 SMOKE_FULL_LOGIN="${SMOKE_FULL_LOGIN:-0}"
 
-# shellcheck disable=SC1091
 source "$(dirname "$0")/load-test-password.sh"
 PASS="$(load_test_password "$EMAIL")"
 

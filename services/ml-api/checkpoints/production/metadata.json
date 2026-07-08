@@ -1,0 +1,11 @@
+{
+  "version": "v0_baseline",
+  "val_auc": 0.615,
+  "test_auc": 0.6,
+  "classes": 4,
+  "class_names": ["normal", "steatosis", "fibrosis", "cirrhosis"],
+  "model_name": "efficientnet_b4",
+  "input_size": 380,
+  "date": "2026-07-08",
+  "status": "production"
+}

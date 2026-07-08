@@ -104,7 +104,6 @@ func (s *Service) ParseAccessToken(token string) (*Claims, error) {
 	return s.parseToken(token, "access")
 }
 
-// liveRole reloads role from DB for sensitive operations (exports).
 func (s *Service) liveRole(ctx context.Context, claims *Claims) (domain.Role, error) {
 	if claims == nil || claims.Email == "" {
 		return "", ErrUnauthorized
@@ -680,7 +679,7 @@ func (s *Service) DownloadTrainingExport(ctx context.Context, claims *Claims, f 
 	if err != nil {
 		return nil, "", err
 	}
-	name := fmt.Sprintf("EyeEyeAI_Training_%s.zip", time.Now().Format("2006-01-02"))
+	name := fmt.Sprintf("LiverScreening_Training_%s.zip", time.Now().Format("2006-01-02"))
 	return data, name, nil
 }
 
@@ -807,7 +806,7 @@ func (s *Service) DownloadCaseImagesArchive(ctx context.Context, claims *Claims,
 	if err != nil {
 		return nil, "", err
 	}
-	return data, fmt.Sprintf("EyeEye_%s_images.zip", caseID), nil
+	return data, fmt.Sprintf("LiverScreening_%s_images.zip", caseID), nil
 }
 
 func (s *Service) GetCaseImageFile(ctx context.Context, claims *Claims, caseID, imageIDStr string) ([]byte, string, string, error) {

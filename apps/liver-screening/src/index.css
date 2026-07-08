@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --color-hub-heading: var(--odos-hub-heading);
+  --color-hub-body: var(--odos-hub-body);
+  --color-hub-muted: var(--odos-hub-muted);
+  --color-hub-cta: var(--odos-hub-cta);
+  --color-hub-cta-light: var(--odos-hub-cta-light);
+  --color-hub-navy: var(--odos-hub-navy);
+  --color-hub-page: var(--odos-hub-page-bg);
+  --color-hub-selected: var(--odos-hub-selected-bg);
+  --color-success: var(--odos-success);
+  --color-warning: var(--odos-warning);
+  --color-danger: var(--odos-danger);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --shadow-results-card: var(--shadow-results-card);
+  --shadow-hub-cta: var(--shadow-hub-cta);
+  --shadow-auth-card: var(--shadow-auth-card);
+}
+
+:root {
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --odos-hub-heading: #141c2e;
+  --odos-hub-body: #1a2b3c;
+  --odos-hub-muted: #717171;
+  --odos-hub-cta: #0c9cde;
+  --odos-hub-cta-light: #0eb5d8;
+  --odos-hub-navy: #1e2a4a;
+  --odos-hub-selected-bg: #e8f4fd;
+  --odos-hub-page-bg: #f5f6f8;
+  --odos-hub-divider: #f0f0f0;
+  --odos-hub-cta-tint-10: rgba(12, 156, 222, 0.1);
+
+  --odos-success: #13992a;
+  --odos-warning: #d97706;
+  --odos-danger: #ea5455;
+  --odos-badge-success: #13992a;
+  --odos-badge-success-bg: rgba(19, 153, 42, 0.1);
+  --odos-badge-warning-text: #d97706;
+  --odos-badge-warning-bg: rgba(254, 243, 199, 0.7);
+  --odos-risk-high: #ea5455;
+  --odos-risk-high-tint: rgba(234, 84, 85, 0.12);
+
+  --odos-input-border: #e5e7eb;
+  --odos-input-placeholder: #9ca3af;
+  --odos-input-bg-subtle: #f9fafb;
+
+  --background: var(--odos-hub-page-bg);
+  --foreground: var(--odos-hub-heading);
+  --card: #ffffff;
+  --card-foreground: var(--odos-hub-heading);
+  --border: color-mix(in oklch, oklch(0.35 0.04 250) 14%, transparent);
+  --input: color-mix(in oklch, oklch(0.35 0.04 250) 8%, transparent);
+  --destructive: var(--odos-danger);
+
+  --shadow-hub-cta: 0px 10px 10px 0px rgba(20, 28, 46, 0.1);
+  --shadow-results-card: 0px 4px 24px rgba(20, 28, 46, 0.06);
+  --shadow-auth-card: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}

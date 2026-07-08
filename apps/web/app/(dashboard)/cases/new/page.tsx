@@ -39,7 +39,7 @@ import { caseSubmitSchema, firstZodIssueMessage, type CaseFormValues } from "@/l
 import { cn } from "@/lib/utils";
 
 const COMORBIDITY_OPTIONS = [
-  "Сахарный диабет 2 типа",
+  "СД2",
   "Ожирение (ИМТ ≥30)",
   "Артериальная гипертензия",
   "Дислипидемия",
@@ -299,11 +299,11 @@ function NewCaseForm({
             <ChipHint show={!chips.eye} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>ХВГ</FieldLabel>
+            <FieldLabel>ХВГ статус</FieldLabel>
             <ChipGroup options={HBV_OPTIONS} value={chips.aprop} onChange={(v) => setChip("aprop", v)} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Коморбидности</FieldLabel>
+            <FieldLabel>Факторы риска</FieldLabel>
             <div className="flex flex-wrap gap-2">
               {COMORBIDITY_OPTIONS.map((r) => {
                 const on = comorbidities.includes(r);
@@ -336,7 +336,7 @@ function NewCaseForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <FieldLabel>Аппарат УЗИ</FieldLabel>
+            <FieldLabel>Тип аппарата</FieldLabel>
             <ChipGroup options={US_DEVICE_OPTIONS} value={chips.camera} onChange={(v) => setChip("camera", v)} />
           </div>
           <CaseImageUpload files={imageFiles} onChange={setImageFiles} />
@@ -357,11 +357,11 @@ function NewCaseForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>УЗИ-признаки</FieldLabel>
+            <FieldLabel>Эхоструктура</FieldLabel>
             <ChipGroup options={US_FINDING_OPTIONS} value={chips.ropForm} onChange={(v) => setChip("ropForm", v)} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Стеатоз</FieldLabel>
+            <FieldLabel>Степень стеатоза</FieldLabel>
             <ChipGroup
               options={STEATOSIS_OPTIONS}
               value={chips.plusDisease}
@@ -378,15 +378,15 @@ function NewCaseForm({
             <ChipHint show={!chips.stage} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Триаж (врач)</FieldLabel>
+            <FieldLabel>Риск</FieldLabel>
             <ChipGroup options={TRIAGE_OPTIONS} value={chips.zone} onChange={(v) => setChip("zone", v)} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Предварительный диагноз</FieldLabel>
+            <FieldLabel>Диагноз AI</FieldLabel>
             <ChipGroup options={PRE_DIAG_OPTIONS} value={chips.preDiag} onChange={(v) => setChip("preDiag", v)} />
           </div>
           <div className="space-y-2">
-            <FieldLabel>Уверенность</FieldLabel>
+            <FieldLabel>Уверенность врача</FieldLabel>
             <ChipGroup
               options={CONFIDENCE_OPTIONS}
               value={chips.confidence}
@@ -394,7 +394,7 @@ function NewCaseForm({
             />
           </div>
           <div className="space-y-2">
-            <FieldLabel>Рекомендация</FieldLabel>
+            <FieldLabel>Маршрут</FieldLabel>
             <ChipGroup
               options={RECOMMENDATION_OPTIONS}
               value={chips.recommendation}
@@ -402,7 +402,7 @@ function NewCaseForm({
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Визит</FieldLabel>
+            <FieldLabel>Этап скрининга</FieldLabel>
             <ChipGroup options={VISIT_OPTIONS} value={chips.visit} onChange={(v) => setChip("visit", v)} />
           </div>
           <div className="space-y-2 sm:col-span-2">

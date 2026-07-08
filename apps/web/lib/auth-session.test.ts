@@ -38,7 +38,7 @@ describe("isSecureCookie", () => {
   });
 
   it("uses AUTH_URL https default", () => {
-    process.env.AUTH_URL = "https://eye-eye.ropca.kz";
+    process.env.AUTH_URL = "https://platform.cornea.kz";
     const req = request("http://localhost/login");
     expect(isSecureCookie(req)).toBe(true);
   });
@@ -46,7 +46,7 @@ describe("isSecureCookie", () => {
 
 describe("resolveSessionCookie", () => {
   it("picks cookie present on request", () => {
-    const req = request("https://eye-eye.ropca.kz/", {
+    const req = request("https://platform.cornea.kz/", {
       headers: { "x-forwarded-proto": "https" },
       cookies: { "__Secure-authjs.session-token": "abc" },
     });
@@ -91,7 +91,7 @@ describe("resolveAccessToken", () => {
     });
     vi.mocked(isAccessTokenFresh).mockReturnValue(true);
 
-    const req = request("https://eye-eye.ropca.kz/", {
+    const req = request("https://platform.cornea.kz/", {
       headers: { "x-forwarded-proto": "https" },
       cookies: { "__Secure-next-auth.session-token": "jwt" },
     });
@@ -117,7 +117,7 @@ describe("resolveAccessToken", () => {
     });
     vi.mocked(encode).mockResolvedValue("encoded-jwt");
 
-    const req = request("https://eye-eye.ropca.kz/", {
+    const req = request("https://platform.cornea.kz/", {
       headers: { "x-forwarded-proto": "https" },
       cookies: { "__Secure-authjs.session-token": "jwt" },
     });

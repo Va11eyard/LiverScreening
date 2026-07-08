@@ -13,7 +13,7 @@ import (
 
 const (
 	sheetWeekly    = "Еженедельный отчёт"
-	sheetStages    = "Стадии и гестация"
+	sheetStages    = "Стадии фиброза"
 	sheetHospitals = "Сводка по больницам"
 	sheetSurvey    = "Продуктовые метрики"
 	sheetInstruct  = "Инструкция"
@@ -22,11 +22,11 @@ const (
 var SheetOrder = []string{sheetWeekly, sheetStages, sheetHospitals, sheetSurvey, sheetInstruct}
 
 var WeeklyHeaders = []string{
-	"ID кейса", "Дата осмотра", "Больница", "ФИО врача", "Фамилия мамы (ребёнка)",
-	"Гестация (нед+дни)", "Масса при рождении (г)", "ПКВ (нед)", "pH крови",
-	"Аваскулярная зона — цвет", "Аваскулярная зона — протяжённость", "Зона васкуляризации",
-	"Стадия РН (врач)", "Plus Disease", "Форма РН", "Диагноз врача (до AI)",
-	"Совпадение с AI", "Агрессивная форма", "Сомнительный кейс", "Примечания",
+	"ID кейса", "Дата осмотра", "ПМСП", "ФИО врача", "Пациент",
+	"Возраст (лет)", "Тромбоциты (×10⁹/л)", "АЛТ (Ед/л)", "АСТ (Ед/л)",
+	"Этиология", "Этап скрининга", "Аппарат УЗИ",
+	"Стадия фиброза", "Степень стеатоза", "Эхоструктура", "Диагноз AI",
+	"Совпадение с AI", "ХВГ статус", "Уверенность врача", "Маршрут", "Примечания",
 }
 
 func BuildReport(cases []domain.Case, surveys []domain.Survey) ([]byte, error) {
@@ -94,23 +94,23 @@ func writeWeeklySheet(f *excelize.File, cases []domain.Case) error {
 		}
 		vals := []any{
 			c.CaseID, c.Date, c.Hospital, c.Doctor, domain.PatientLabel(c.MotherSurname, c.ChildSurname),
-			c.GA, c.BW, c.PCA, c.PH, c.AvascColor, c.AvascHours, c.Zone,
-			c.Stage, c.PlusDisease, c.RopForm, c.PreDiag, aiMatch, c.Aprop, c.Doubtful, c.Notes,
+			c.GA, c.BW, c.PCA, c.PH, c.Eye, c.Visit, c.Camera,
+			c.Stage, c.PlusDisease, c.RopForm, c.PreDiag, aiMatch, c.Aprop, c.Confidence, c.Recommendation, c.Notes,
 		}
 		for colIdx, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
 			_ = f.SetCellValue(sheetWeekly, cell, v)
-			if domain.IsAggressive(c.Aprop) {
+			if domain.IsReferredToHepatologist(c.Recommendation) || c.Stage == "F4" {
 				style, _ := f.NewStyle(&excelize.Style{Fill: excelize.Fill{Type: "pattern", Color: []string{"#FECACA"}, Pattern: 1}})
 				_ = f.SetCellStyle(sheetWeekly, cell, cell, style)
 			}
 		}
 	}
 
-	_ = addListValidation(f, sheetWeekly, "M2:M1000", []string{"Нет РН", "Ст. 1", "Ст. 2", "Ст. 3", "Ст. 4", "Ст. 5"})
-	_ = addListValidation(f, sheetWeekly, "N2:N1000", []string{"Нет", "Есть", "Pre-plus", "Не определено"})
-	_ = addListValidation(f, sheetWeekly, "O2:O1000", []string{"Активная", "Регрессирующая", "Агрессивная (AP-ROP)"})
-	_ = addListValidation(f, sheetWeekly, "R2:R1000", []string{"Да (AP-ROP)", "Нет", "Подозрение"})
+	_ = addListValidation(f, sheetWeekly, "M2:M1000", domain.StageOrder)
+	_ = addListValidation(f, sheetWeekly, "N2:N1000", []string{"Нет / минимальный", "Лёгкий", "Умеренный", "Выраженный"})
+	_ = addListValidation(f, sheetWeekly, "O2:O1000", []string{"Норма", "Гиперэхогенность", "Неоднородная эхоструктура", "Узел / очаг", "Асцит"})
+	_ = addListValidation(f, sheetWeekly, "R2:R1000", []string{"Нет", "Да (ХВГ)", "Неизвестно"})
 	return nil
 }
 
@@ -166,7 +166,7 @@ func writeSurveySheet(f *excelize.File, surveys []domain.Survey) error {
 }
 
 func writeStagesSheet(f *excelize.File, rows []domain.StageRow) error {
-	headers := []string{"Стадия", "Кол-во (врач)", "Plus Disease", "Агрессивные формы", "Средняя гестация", "Средняя масса (г)", "Средний pH"}
+	headers := []string{"Стадия", "Кол-во", "Высокий риск", "Направлено к гепатологу", "Средний возраст"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		_ = f.SetCellValue(sheetStages, cell, h)
@@ -180,7 +180,7 @@ func writeStagesSheet(f *excelize.File, rows []domain.StageRow) error {
 
 	for rowIdx, r := range dataRows {
 		rowNum := rowIdx + 2
-		vals := []any{r.Stage, r.Count, r.PlusDisease, r.Aggressive, formatFloat(r.AvgGA), formatFloat(r.AvgBW), formatFloat(r.AvgPH)}
+		vals := []any{r.Stage, r.Count, r.PlusDisease, r.Aggressive, formatFloat(r.AvgGA)}
 		for colIdx, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowNum)
 			_ = f.SetCellValue(sheetStages, cell, v)
@@ -197,14 +197,12 @@ func writeStagesSheet(f *excelize.File, rows []domain.StageRow) error {
 		}
 		total := rows[len(rows)-1]
 		_ = f.SetCellValue(sheetStages, fmt.Sprintf("E%d", totalRow), formatFloat(total.AvgGA))
-		_ = f.SetCellValue(sheetStages, fmt.Sprintf("F%d", totalRow), formatFloat(total.AvgBW))
-		_ = f.SetCellValue(sheetStages, fmt.Sprintf("G%d", totalRow), formatFloat(total.AvgPH))
 	}
 	return nil
 }
 
 func writeHospitalsSheet(f *excelize.File, rows []domain.HospitalRow) error {
-	headers := []string{"Больница", "Всего пациентов", "Выявлено РН", "Стадии 1–2", "Стадии 3–5", "Plus Disease", "Агрессивные формы", "Сомнительные кейсы"}
+	headers := []string{"Больница", "Всего", "Норма", "F0–F1", "F2–F3", "F4/Цирроз", "К гепатологу", "Сомнительные"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		_ = f.SetCellValue(sheetHospitals, cell, h)
@@ -224,12 +222,12 @@ func writeInstructionSheet(f *excelize.File) error {
 		"ИНСТРУКЦИЯ ПО ЗАПОЛНЕНИЮ",
 		"",
 		"Лист 1: Еженедельный отчёт — одна строка на каждого пациента. Данные заполняются через веб-форму «Карта пациента».",
-		"Лист 2: Стадии и гестация — автоматическая сводка по стадиям РН из карт пациентов.",
-		"Лист 3: Сводка по больницам — автоматическая сводка по 7 пилотным центрам.",
+		"Лист 2: Стадии фиброза — автоматическая сводка по стадиям F0–F4 из карт пациентов.",
+		"Лист 3: Сводка по больницам — автоматическая сводка по 6 пилотным ПМСП.",
 		"Лист 4: Продуктовые метрики — анкета врача (12 вопросов, шкала 1–5), вкладка «Продуктовые метрики» в приложении.",
 		"Лист 5: Инструкция — этот лист.",
 		"",
-		"Контакты координатора пилота: coordinator@eyeeye.kz",
+		"Контакты координатора пилота: coordinator@liver.kz",
 		fmt.Sprintf("Сгенерировано: %s", time.Now().Format("2006-01-02 15:04")),
 	}
 	for i, line := range lines {
@@ -248,9 +246,9 @@ func formatFloat(v *float64) string {
 }
 
 func Filename() string {
-	return fmt.Sprintf("EyeEyeAI_Weekly_%s.xlsx", time.Now().Format("2006-01-02"))
+	return fmt.Sprintf("LiverScreening_Weekly_%s.xlsx", time.Now().Format("2006-01-02"))
 }
 
 func SurveyFilename() string {
-	return fmt.Sprintf("EyeEyeAI_Survey_%s.xlsx", time.Now().Format("2006-01-02"))
+	return fmt.Sprintf("LiverScreening_Survey_%s.xlsx", time.Now().Format("2006-01-02"))
 }

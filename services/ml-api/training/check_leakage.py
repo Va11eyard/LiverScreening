@@ -9,20 +9,48 @@ from pathlib import Path
 import pandas as pd
 
 SPLITS = ("train", "val", "test")
-REQUIRED_COLUMNS = {"path", "label", "patient_id", "split"}
-
+REQUIRED_BASE_COLUMNS = {"path", "label", "patient_id"}
 
 def file_md5(path: str | Path) -> str:
     return hashlib.md5(Path(path).read_bytes()).hexdigest()
 
+def assign_splits(df: pd.DataFrame, seed: int = 42) -> pd.DataFrame:
+    from patient_split import StratifiedSplitError, assert_split_class_coverage, stratified_patient_split
 
-def load_and_validate(csv_path: Path) -> pd.DataFrame:
+    try:
+        train_df, val_df, test_df = stratified_patient_split(df, seed=seed)
+    except StratifiedSplitError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    train_paths = set(train_df["path"].astype(str))
+    val_paths = set(val_df["path"].astype(str))
+    test_paths = set(test_df["path"].astype(str))
+    out = df.copy()
+
+    def map_split(path: str) -> str:
+        path = str(path)
+        if path in train_paths:
+            return "train"
+        if path in val_paths:
+            return "val"
+        if path in test_paths:
+            return "test"
+        raise ValueError(f"path not assigned to split: {path}")
+
+    out["split"] = out["path"].map(map_split)
+    assert_split_class_coverage(out, level="patient")
+    return out
+
+def load_and_validate(csv_path: Path, seed: int = 42) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
-    missing = REQUIRED_COLUMNS - set(df.columns)
+    missing = REQUIRED_BASE_COLUMNS - set(df.columns)
     if missing:
         raise SystemExit(f"CSV missing columns: {sorted(missing)}")
 
     df = df.copy()
+    if "split" not in df.columns:
+        print("No split column — assigning hash-patient split (same as train.py)")
+        df = assign_splits(df, seed=seed)
     df["split"] = df["split"].astype(str).str.strip().str.lower()
     bad_splits = sorted(set(df["split"]) - set(SPLITS))
     if bad_splits:
@@ -34,7 +62,6 @@ def load_and_validate(csv_path: Path) -> pd.DataFrame:
 
     return df
 
-
 def split_summary(df: pd.DataFrame, split_name: str) -> dict:
     part = df[df["split"] == split_name]
     label_counts = part["label"].value_counts().sort_index()
@@ -43,7 +70,6 @@ def split_summary(df: pd.DataFrame, split_name: str) -> dict:
         "patients": int(part["patient_id"].nunique()),
         "labels": {int(k): int(v) for k, v in label_counts.items()},
     }
-
 
 def check_md5_leakage(df: pd.DataFrame) -> list[str]:
     errors: list[str] = []
@@ -89,7 +115,6 @@ def check_md5_leakage(df: pd.DataFrame) -> list[str]:
 
     return errors
 
-
 def check_patient_leakage(df: pd.DataFrame) -> list[str]:
     errors: list[str] = []
     patients_by_split = {
@@ -107,7 +132,6 @@ def check_patient_leakage(df: pd.DataFrame) -> list[str]:
 
     return errors
 
-
 def print_summaries(df: pd.DataFrame) -> None:
     print("Split summary")
     print("-" * 60)
@@ -120,13 +144,13 @@ def print_summaries(df: pd.DataFrame) -> None:
         )
     print("-" * 60)
 
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check train/val/test leakage in split CSV")
-    parser.add_argument("--csv", required=True, help="CSV with path,label,patient_id,split")
+    parser.add_argument("--csv", required=True, help="CSV with path,label,patient_id[,split]")
+    parser.add_argument("--seed", type=int, default=42, help="Split seed when split column is absent")
     args = parser.parse_args()
 
-    df = load_and_validate(Path(args.csv))
+    df = load_and_validate(Path(args.csv), seed=args.seed)
     print_summaries(df)
 
     errors: list[str] = []
@@ -140,7 +164,6 @@ def main() -> None:
         raise SystemExit(1)
 
     print("\nOK: no MD5 or patient_id leakage between train/val/test")
-
 
 if __name__ == "__main__":
     main()

@@ -40,7 +40,7 @@ export function MlLabTabs({ tab, onTab }: Props) {
         ))}
       </div>
       <a
-        href="http://localhost:3004"
+        href={import.meta.env.VITE_PLATFORM_URL ?? "http://localhost:3004"}
         target="_blank"
         rel="noreferrer"
         className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-200 ease-out hover:bg-slate-50"

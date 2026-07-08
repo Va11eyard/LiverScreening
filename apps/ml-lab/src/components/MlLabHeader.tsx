@@ -12,7 +12,7 @@ export function MlLabHeader({ online }: Props) {
         <span className="mb-2 inline-block rounded-full border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
           Прототип · отдельный контур
         </span>
-        <h1 className="text-3xl font-bold tracking-[-0.02em] text-slate-900">HepatoScreen ML Lab</h1>
+        <h1 className="text-3xl font-bold tracking-[-0.02em] text-slate-900">LiverScreening ML Lab</h1>
         <p className="mt-2 max-w-xl text-sm text-slate-500">
           Загрузка УЗИ и тестирование модели без клинического регистра
         </p>

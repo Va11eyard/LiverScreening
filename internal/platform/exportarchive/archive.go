@@ -34,7 +34,7 @@ func ValidateFilename(name string) error {
 	if strings.Contains(name, "..") {
 		return ErrInvalidFilename
 	}
-	if !strings.HasPrefix(name, "EyeEyeAI_Weekly_") || !strings.HasSuffix(strings.ToLower(name), ".xlsx") {
+	if !strings.HasPrefix(name, "LiverScreening_Weekly_") || !strings.HasSuffix(strings.ToLower(name), ".xlsx") {
 		return ErrInvalidFilename
 	}
 	return nil

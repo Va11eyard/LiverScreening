@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, FilePlus2, FlaskConical, LineChart } from "lucide-react";
+import { ClipboardList, FilePlus2, FlaskConical, HeartPulse, LineChart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { mlLabUrl, screeningAppUrl } from "@/lib/site-urls";
 
 import { SidebarUserMenu } from "./sidebar-user-menu";
 
@@ -46,7 +47,7 @@ export function AppSidebar({
     >
       <div className="px-6 pt-7 pb-4">
         <Link href="/cases" className="inline-flex items-center" onClick={() => onNavigate?.()}>
-          <span className="font-heading text-xl font-bold tracking-tight text-hub-heading">HepatoScreen</span>
+          <span className="font-heading text-xl font-bold tracking-tight text-hub-heading">LiverScreening</span>
         </Link>
         <p className="mt-2 text-xs font-medium text-hub-muted">Клинический пилот · 2026</p>
       </div>
@@ -83,7 +84,16 @@ export function AppSidebar({
           );
         })}
         <a
-          href="http://localhost:3005"
+          href={screeningAppUrl()}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-hub-heading transition-colors hover:bg-hub-page"
+        >
+          <HeartPulse className="size-[18px] shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1 truncate">Скрининг пациента</span>
+        </a>
+        <a
+          href={mlLabUrl()}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-hub-heading transition-colors hover:bg-hub-page"

@@ -1,13 +1,10 @@
 #!/bin/bash
-# Generate unique coordinator password; doctors use shared Doctor123! via reset-doctor-passwords.sh.
-# Safe for existing DB: only updates password_hash when SEED_ROTATE_PASSWORDS=1.
-# Does NOT touch case data or uploads.
 set -euo pipefail
 export PATH="/usr/local/go/bin:$PATH"
 
-ENV=/opt/eyeeye-api/.env
-PASS_FILE=/opt/eyeeye-api/doctor-passwords.env
-CREDENTIALS=/opt/eyeeye-api/credentials-$(date +%Y%m%d-%H%M%S).txt
+ENV=/opt/liverscreening-api/.env
+PASS_FILE=/opt/liverscreening-api/doctor-passwords.env
+CREDENTIALS=/opt/liverscreening-api/credentials-$(date +%Y%m%d-%H%M%S).txt
 
 if [ ! -f "$ENV" ]; then
   echo "Missing $ENV — run deploy first" >&2
@@ -20,25 +17,24 @@ gen_pass() {
 
 NEW_ADMIN_PASS=$(gen_pass)
 {
-  echo "# EyeEye pilot credentials — store securely, then delete this file"
+  echo "# LiverScreening pilot credentials — store securely, then delete this file"
   echo "# Generated: $(date -Iseconds)"
   echo ""
-  echo "coordinator@eyeeye.kz=${NEW_ADMIN_PASS}"
+  echo "coordinator@liver.kz=${NEW_ADMIN_PASS}"
 } | sudo tee "$CREDENTIALS" >/dev/null
 
 sudo tee "$PASS_FILE" >/dev/null <<HDR
-# email=password (coordinator + doctors; source of truth for smoke tests)
-coordinator@eyeeye.kz=${NEW_ADMIN_PASS}
+coordinator@liver.kz=${NEW_ADMIN_PASS}
 HDR
 
 DOCTORS=(
-  doctor@eyeeye.kz
-  doctor2@eyeeye.kz
-  doctor3@eyeeye.kz
-  doctor4@eyeeye.kz
-  doctor5@eyeeye.kz
-  doctor6@eyeeye.kz
-  doctor7@eyeeye.kz
+  doctor@liver.kz
+  doctor2@liver.kz
+  doctor3@liver.kz
+  doctor4@liver.kz
+  doctor5@liver.kz
+  doctor6@liver.kz
+  doctor7@liver.kz
 )
 
 for email in "${DOCTORS[@]}"; do
@@ -67,9 +63,8 @@ if ! sudo grep -q '^LISTEN_HOST=' "$ENV"; then
   echo 'LISTEN_HOST=127.0.0.1' | sudo tee -a "$ENV" >/dev/null
 fi
 
-cd /opt/eyeeyeupload-src
+cd /opt/liverscreening-src
 set -a
-# shellcheck disable=SC1091
 eval "$(sudo grep -v '^#' "$ENV" | sed 's/^/export /')"
 set +a
 

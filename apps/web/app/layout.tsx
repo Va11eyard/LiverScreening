@@ -3,8 +3,8 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HepatoScreen — Пилот",
-  description: "Платформа клинического пилота HepatoScreen",
+  title: "LiverScreening — Пилот",
+  description: "Платформа клинического пилота LiverScreening",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

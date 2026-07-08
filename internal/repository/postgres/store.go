@@ -230,7 +230,7 @@ func (s *Store) ListCases(ctx context.Context, f domain.CaseFilter) ([]domain.Ca
 		q = q.Where("stage = ?", f.Stage)
 	}
 	if f.Aprop {
-		q = q.Where("aprop = ?", "Да (AP-ROP)")
+		q = q.Where("aprop = ?", "Да (ХВГ)")
 	}
 	if f.UserID != nil {
 		q = q.Where("user_id = ?", *f.UserID)

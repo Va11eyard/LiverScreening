@@ -1,0 +1,11 @@
+# Copy to /etc/logrotate.d/liverscreening-audit on Proecta (optional).
+/var/log/liverscreening/audit.jsonl {
+    weekly
+    rotate 13
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600 www-data www-data
+    copytruncate
+}

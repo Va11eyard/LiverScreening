@@ -208,12 +208,16 @@ export type WeeklyReportRow = {
   bw?: number;
   pca?: number;
   ph?: string;
+  etiology?: string;
+  visit?: string;
   stage?: string;
   plus_disease?: string;
   rop_form?: string;
   pre_diag?: string;
   ai_match?: string | null;
   aprop?: string;
+  confidence?: string;
+  recommendation?: string;
   doubtful?: string;
   notes?: string;
   image_count?: number;

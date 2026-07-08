@@ -1,4 +1,3 @@
-# Backends in Docker; frontends via pnpm dev on the host.
 param(
   [switch]$ApiOnly,
   [ValidateSet("all", "web", "ml-lab")]
@@ -48,6 +47,7 @@ if (-not (Test-Path "node_modules")) {
 Write-Host ""
 Write-Host "Web:    http://localhost:3004"
 Write-Host "ML Lab: http://localhost:3005"
+Write-Host "Screening: http://localhost:3006"
 Write-Host "API:    http://localhost:8088"
 Write-Host "ML API: http://localhost:8000"
 Write-Host "Press Ctrl+C to stop dev servers (Docker keeps running)."

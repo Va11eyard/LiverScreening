@@ -69,13 +69,11 @@ export const loginSchema = z.object({
   email: z.string().email("Введите email"),
   password: z.string().min(6, "Минимум 6 символов"),
 });
-
-/** Fields bound to react-hook-form inputs. */
 export const caseFormSchema = z.object({
   date: requiredText("Укажите дату"),
   hospital: requiredText("Выберите больницу"),
   doctor: requiredText("Укажите ФИО врача"),
-  motherSurname: requiredText("Укажите фамилию мамы"),
+  motherSurname: requiredText("Укажите фамилию пациента"),
   childSurname: requiredText("Укажите фамилию ребёнка"),
   ga: optionalText(),
   bw: optionalNumber(),
@@ -83,8 +81,6 @@ export const caseFormSchema = z.object({
   ph: optionalText(),
   notes: optionalText(),
 });
-
-/** Full payload after merging chip selections. */
 export const caseSubmitSchema = caseFormSchema.extend({
   eye: optionalText(),
   visit: optionalText(),

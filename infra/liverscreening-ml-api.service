@@ -1,0 +1,15 @@
+[Unit]
+Description=LiverScreening ML API (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/liverscreening-src/services/ml-api
+EnvironmentFile=/opt/liverscreening-ml-api/.env
+ExecStart=/opt/liverscreening-src/services/ml-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8001
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -28,83 +27,72 @@ type HospitalRow struct {
 }
 
 type WeeklyRow struct {
-	CaseID      string  `json:"case_id"`
-	Date        string  `json:"date"`
-	Hospital    string  `json:"hospital"`
-	Doctor      string  `json:"doctor"`
-	PatientLabel string  `json:"patient_label"`
-	MotherSurname string `json:"mother_surname"`
-	ChildSurname  string `json:"child_surname"`
-	GA          string  `json:"ga"`
-	BW          int     `json:"bw"`
-	PCA         int     `json:"pca"`
-	PH          string  `json:"ph"`
-	Stage       string  `json:"stage"`
-	PlusDisease string  `json:"plus_disease"`
-	RopForm     string  `json:"rop_form"`
-	PreDiag     string  `json:"pre_diag"`
-	AIMatch     *string `json:"ai_match"`
-	Aprop       string  `json:"aprop"`
-	Doubtful    string  `json:"doubtful"`
-	Notes       string  `json:"notes"`
-	ImageCount  int     `json:"image_count"`
+	CaseID         string  `json:"case_id"`
+	Date           string  `json:"date"`
+	Hospital       string  `json:"hospital"`
+	Doctor         string  `json:"doctor"`
+	PatientLabel   string  `json:"patient_label"`
+	MotherSurname  string  `json:"mother_surname"`
+	ChildSurname   string  `json:"child_surname"`
+	GA             string  `json:"ga"`
+	BW             int     `json:"bw"`
+	PCA            int     `json:"pca"`
+	PH             string  `json:"ph"`
+	Eye            string  `json:"etiology"`
+	Visit          string  `json:"visit"`
+	Stage          string  `json:"stage"`
+	PlusDisease    string  `json:"plus_disease"`
+	RopForm        string  `json:"rop_form"`
+	PreDiag        string  `json:"pre_diag"`
+	AIMatch        *string `json:"ai_match"`
+	Aprop          string  `json:"aprop"`
+	Confidence     string  `json:"confidence"`
+	Recommendation string  `json:"recommendation"`
+	Doubtful       string  `json:"doubtful"`
+	Notes          string  `json:"notes"`
+	ImageCount     int     `json:"image_count"`
 }
 
-func HasPlusDisease(v string) bool {
-	return strings.Contains(v, "Есть")
+func HasHighRisk(steatosis string) bool {
+	return steatosis == "Умеренный" || steatosis == "Выраженный"
 }
 
-func IsAggressive(v string) bool {
-	return v == "Да (AP-ROP)"
+func IsReferredToHepatologist(recommendation string) bool {
+	return recommendation == "Направление к гепатологу" ||
+		strings.Contains(strings.ToLower(recommendation), "гепатолог")
 }
 
-func IsDoubtful(v string) bool {
-	return v == "Да"
+func IsDoubtful(confidence string) bool {
+	return confidence == "Сомневаюсь"
 }
 
-func HasROP(stage string) bool {
-	return stage != "" && stage != "Нет РН"
+func IsNormalFinding(c Case) bool {
+	if c.Stage == "F0" || c.PreDiag == "Норма" {
+		return true
+	}
+	return c.Stage == "" || c.Stage == "Не определено"
 }
 
-func IsStage12(stage string) bool {
-	return stage == "Ст. 1" || stage == "Ст. 2"
+func IsStageF01(stage string) bool {
+	return stage == "F0" || stage == "F1"
 }
 
-func IsStage35(stage string) bool {
-	return stage == "Ст. 3" || stage == "Ст. 4" || stage == "Ст. 5"
+func IsStageF23(stage string) bool {
+	return stage == "F2" || stage == "F3"
 }
 
-var gaRe = regexp.MustCompile(`^(\d+)(?:\+(\d+))?$`)
+func IsStageF4(stage string) bool {
+	return stage == "F4"
+}
 
-func ParseGAWeeks(ga string) (float64, bool) {
-	ga = strings.TrimSpace(ga)
-	if ga == "" {
+func ParseAge(age string) (float64, bool) {
+	age = strings.TrimSpace(age)
+	if age == "" {
 		return 0, false
 	}
-	m := gaRe.FindStringSubmatch(ga)
-	if m == nil {
-		if w, err := strconv.ParseFloat(ga, 64); err == nil {
-			return w, true
-		}
-		return 0, false
-	}
-	weeks, _ := strconv.Atoi(m[1])
-	days := 0
-	if m[2] != "" {
-		days, _ = strconv.Atoi(m[2])
-	}
-	return float64(weeks) + float64(days)/7.0, true
-}
-
-var phRe = regexp.MustCompile(`([\d.]+)`)
-
-func ParsePH(ph string) (float64, bool) {
-	m := phRe.FindStringSubmatch(ph)
-	if m == nil {
-		return 0, false
-	}
-	v, err := strconv.ParseFloat(m[1], 64)
-	return v, err == nil
+	age = strings.ReplaceAll(age, ",", ".")
+	v, err := strconv.ParseFloat(age, 64)
+	return v, err == nil && v > 0
 }
 
 func HospitalMatches(caseHospital, pilotHospital string) bool {
@@ -133,18 +121,6 @@ func AvgFloat(vals []float64) *float64 {
 	return &avg
 }
 
-func AvgInt(vals []int) *float64 {
-	if len(vals) == 0 {
-		return nil
-	}
-	sum := 0
-	for _, v := range vals {
-		sum += v
-	}
-	avg := float64(sum) / float64(len(vals))
-	return &avg
-}
-
 func ComputeStageRows(cases []Case) []StageRow {
 	rows := make([]StageRow, 0, len(StageOrder)+1)
 	total := StageRow{Stage: "ИТОГО"}
@@ -152,12 +128,6 @@ func ComputeStageRows(cases []Case) []StageRow {
 	for _, stage := range StageOrder {
 		var matched []Case
 		for _, c := range cases {
-			if stage == "AP-ROP" {
-				if c.Aprop == "Да (AP-ROP)" || strings.Contains(c.RopForm, "AP-ROP") {
-					matched = append(matched, c)
-				}
-				continue
-			}
 			if c.Stage == stage {
 				matched = append(matched, c)
 			}
@@ -173,38 +143,28 @@ func ComputeStageRows(cases []Case) []StageRow {
 }
 
 func aggregateStageRow(stage string, cases []Case) StageRow {
-	var gaVals []float64
-	var bwVals []int
-	var phVals []float64
-	plus := 0
-	aggr := 0
+	var ageVals []float64
+	highRisk := 0
+	referred := 0
 
 	for _, c := range cases {
-		if HasPlusDisease(c.PlusDisease) {
-			plus++
+		if HasHighRisk(c.PlusDisease) {
+			highRisk++
 		}
-		if IsAggressive(c.Aprop) {
-			aggr++
+		if IsReferredToHepatologist(c.Recommendation) {
+			referred++
 		}
-		if v, ok := ParseGAWeeks(c.GA); ok {
-			gaVals = append(gaVals, v)
-		}
-		if c.BW > 0 {
-			bwVals = append(bwVals, c.BW)
-		}
-		if v, ok := ParsePH(c.PH); ok {
-			phVals = append(phVals, v)
+		if v, ok := ParseAge(c.GA); ok {
+			ageVals = append(ageVals, v)
 		}
 	}
 
 	return StageRow{
 		Stage:       stage,
 		Count:       len(cases),
-		PlusDisease: plus,
-		Aggressive:  aggr,
-		AvgGA:       AvgFloat(gaVals),
-		AvgBW:       AvgInt(bwVals),
-		AvgPH:       AvgFloat(phVals),
+		PlusDisease: highRisk,
+		Aggressive:  referred,
+		AvgGA:       AvgFloat(ageVals),
 	}
 }
 
@@ -236,22 +196,22 @@ func ComputeHospitalRows(cases []Case) []HospitalRow {
 func aggregateHospitalRow(hospital string, cases []Case) HospitalRow {
 	row := HospitalRow{Hospital: hospital, Total: len(cases)}
 	for _, c := range cases {
-		if HasROP(c.Stage) {
+		if IsNormalFinding(c) {
 			row.ROPDetected++
 		}
-		if IsStage12(c.Stage) {
+		if IsStageF01(c.Stage) {
 			row.Stages12++
 		}
-		if IsStage35(c.Stage) {
+		if IsStageF23(c.Stage) {
 			row.Stages35++
 		}
-		if HasPlusDisease(c.PlusDisease) {
+		if IsStageF4(c.Stage) {
 			row.PlusDisease++
 		}
-		if IsAggressive(c.Aprop) {
+		if IsReferredToHepatologist(c.Recommendation) {
 			row.Aggressive++
 		}
-		if IsDoubtful(c.Doubtful) {
+		if IsDoubtful(c.Confidence) {
 			row.Doubtful++
 		}
 	}
@@ -262,26 +222,30 @@ func ToWeeklyRows(cases []Case, imageCounts map[string]int) []WeeklyRow {
 	out := make([]WeeklyRow, len(cases))
 	for i, c := range cases {
 		out[i] = WeeklyRow{
-			CaseID:      c.CaseID,
-			Date:        c.Date,
-			Hospital:    c.Hospital,
-			Doctor:      c.Doctor,
-			PatientLabel:  PatientLabel(c.MotherSurname, c.ChildSurname),
-			MotherSurname: c.MotherSurname,
-			ChildSurname:  c.ChildSurname,
-			GA:          c.GA,
-			BW:          c.BW,
-			PCA:         c.PCA,
-			PH:          c.PH,
-			Stage:       c.Stage,
-			PlusDisease: c.PlusDisease,
-			RopForm:     c.RopForm,
-			PreDiag:     c.PreDiag,
-			AIMatch:     c.AIMatch,
-			Aprop:       c.Aprop,
-			Doubtful:    c.Doubtful,
-			Notes:       c.Notes,
-			ImageCount:  imageCounts[c.CaseID],
+			CaseID:         c.CaseID,
+			Date:           c.Date,
+			Hospital:       c.Hospital,
+			Doctor:         c.Doctor,
+			PatientLabel:   PatientLabel(c.MotherSurname, c.ChildSurname),
+			MotherSurname:  c.MotherSurname,
+			ChildSurname:   c.ChildSurname,
+			GA:             c.GA,
+			BW:             c.BW,
+			PCA:            c.PCA,
+			PH:             c.PH,
+			Eye:            c.Eye,
+			Visit:          c.Visit,
+			Stage:          c.Stage,
+			PlusDisease:    c.PlusDisease,
+			RopForm:        c.RopForm,
+			PreDiag:        c.PreDiag,
+			AIMatch:        c.AIMatch,
+			Aprop:          c.Aprop,
+			Confidence:     c.Confidence,
+			Recommendation: c.Recommendation,
+			Doubtful:       c.Doubtful,
+			Notes:          c.Notes,
+			ImageCount:     imageCounts[c.CaseID],
 		}
 	}
 	return out

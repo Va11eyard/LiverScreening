@@ -10,18 +10,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.inference import metadata_to_clinical, run_inference
-from app.model_loader import is_stub_mode, load_models
+from app.model_loader import get_model_info, is_stub_mode, load_models
 from app.triage import run_clinical_triage
 
 logger = logging.getLogger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     load_models()
     logger.info("Vision stub mode: %s", is_stub_mode())
     yield
-
 
 app = FastAPI(
     title="Liver Screening ML API",
@@ -37,7 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class ClinicalTriageRequest(BaseModel):
     age: float = Field(..., ge=0, le=120)
     ast: float = Field(..., ge=0)
@@ -46,11 +43,18 @@ class ClinicalTriageRequest(BaseModel):
     hbv_positive: bool = False
     etiology: str = ""
 
-
 @app.get("/health")
-def health() -> dict[str, str | bool]:
-    return {"status": "healthy", "service": "liver-ml-api", "stub_mode": is_stub_mode()}
-
+def health() -> dict[str, str | float | int | bool | None]:
+    info = get_model_info()
+    return {
+        "status": "ok",
+        "service": "liver-ml-api",
+        "model_version": info.get("version"),
+        "val_auc": info.get("val_auc"),
+        "classes": info.get("classes"),
+        "loaded_at": info.get("loaded_at"),
+        "stub_mode": is_stub_mode(),
+    }
 
 @app.post("/triage/clinical")
 def triage_clinical(body: ClinicalTriageRequest) -> dict[str, Any]:
@@ -72,7 +76,6 @@ def triage_clinical(body: ClinicalTriageRequest) -> dict[str, Any]:
         "recommendation": result.recommendation,
         "highlighted_fields": result.highlighted_fields,
     }
-
 
 @app.post("/inference")
 async def inference(
@@ -98,6 +101,12 @@ async def inference(
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+@app.post("/predict")
+async def predict(
+    metadata: str = Form(...),
+    image: UploadFile | None = File(None),
+) -> dict[str, Any]:
+    return await inference(metadata=metadata, image=image)
 
 @app.post("/")
 async def inference_root(

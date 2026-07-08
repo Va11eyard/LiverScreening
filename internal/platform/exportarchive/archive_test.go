@@ -9,7 +9,7 @@ import (
 
 func TestWriteListRead(t *testing.T) {
 	dir := t.TempDir()
-	name := "EyeEyeAI_Weekly_2026-06-27.xlsx"
+	name := "LiverScreening_Weekly_2026-06-27.xlsx"
 	data := []byte("fake-xlsx")
 
 	if err := Write(dir, name, data); err != nil {
@@ -43,7 +43,7 @@ func TestValidateFilenameRejectsTraversal(t *testing.T) {
 
 func TestReadNotFound(t *testing.T) {
 	dir := t.TempDir()
-	_, err := Read(dir, "EyeEyeAI_Weekly_2026-01-01.xlsx")
+	_, err := Read(dir, "LiverScreening_Weekly_2026-01-01.xlsx")
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
@@ -51,7 +51,7 @@ func TestReadNotFound(t *testing.T) {
 
 func TestWriteAtomic(t *testing.T) {
 	dir := t.TempDir()
-	name := "EyeEyeAI_Weekly_2026-06-28.xlsx"
+	name := "LiverScreening_Weekly_2026-06-28.xlsx"
 	if err := Write(dir, name, []byte("v1")); err != nil {
 		t.Fatal(err)
 	}

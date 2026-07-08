@@ -9,14 +9,13 @@ from app.triage import calc_apri, calc_fib4, fuse_risk, run_clinical_triage, Cli
 
 client = TestClient(app)
 
-
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
     data = r.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "ok"
     assert "stub_mode" in data
-
+    assert "model_version" in data
 
 def test_inference_with_model_flags():
     img = Image.new("RGB", (128, 128), color=(120, 100, 80))
@@ -33,16 +32,13 @@ def test_inference_with_model_flags():
     assert "stub_mode" in body
     assert "model_loaded" in body
 
-
 def test_fib4_apri():
     assert calc_fib4(50, 40, 40, 200) > 0
     assert calc_apri(40, 200) > 0
 
-
 def test_fuse_risk_refer():
     assert fuse_risk(3.5, 0.5, False) == "refer_hepatology"
     assert fuse_risk(1.0, 2.1, False) == "refer_hepatology"
-
 
 def test_clinical_triage_endpoint():
     r = client.post(
@@ -53,7 +49,6 @@ def test_clinical_triage_endpoint():
     data = r.json()
     assert "fib4" in data
     assert data["risk_tier"] in ("low", "watch", "urgent", "refer_hepatology")
-
 
 def test_inference_multipart():
     img = Image.new("RGB", (128, 128), color=(120, 100, 80))
@@ -74,7 +69,6 @@ def test_inference_multipart():
     assert body["zone"]
     assert "explanation" in body
     assert body["findings"][0]["region"]["cx"] > 0
-
 
 def test_run_clinical_triage_low():
     result = run_clinical_triage(ClinicalInput(30, 25, 25, 250, False))

@@ -17,7 +17,7 @@ function BrandMark({ large }: { large?: boolean }) {
           : "font-heading text-xl font-bold tracking-tight text-hub-heading"
       }
     >
-      HepatoScreen
+      LiverScreening
     </span>
   );
 }

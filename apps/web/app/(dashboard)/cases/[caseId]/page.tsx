@@ -29,7 +29,7 @@ const COMPARE_FIELDS: { key: CompareFieldKey; label: string; aiKey: string }[] =
   { key: "stage", label: "Фиброз (F)", aiKey: "stage" },
   { key: "plusDisease", label: "Стеатоз", aiKey: "plusDisease" },
   { key: "zone", label: "Триаж", aiKey: "zone" },
-  { key: "ropForm", label: "УЗИ-признаки", aiKey: "ropForm" },
+  { key: "ropForm", label: "Эхоструктура", aiKey: "ropForm" },
   { key: "preDiag", label: "Диагноз", aiKey: "preDiag" },
   { key: "aprop", label: "ХВГ", aiKey: "aprop" },
 ];
@@ -114,7 +114,7 @@ function caseSections(detail: CaseDetail): { title: string; items: DetailItem[] 
       items: [
         { label: "Аппарат", value: detail.camera },
         { label: "Качество", value: detail.imageQuality },
-        { label: "УЗИ-признаки", value: detail.ropForm },
+        { label: "Эхоструктура", value: detail.ropForm },
       ],
     },
     {
@@ -164,7 +164,7 @@ export default function CaseDetailPage() {
     if (!caseId) return;
     try {
       await downloadBlob(`cases/${caseId}/images/archive`, {
-        filename: `HepatoScreen_${caseId}_images.zip`,
+        filename: `LiverScreening_${caseId}_images.zip`,
       });
       toast.success("Снимки скачаны");
     } catch (e) {
@@ -480,7 +480,7 @@ export default function CaseDetailPage() {
                 {editing ? (
                   <>
                     <div className="space-y-2">
-                      <Label>Стадия РН</Label>
+                      <Label>Стадия фиброза</Label>
                       <Input value={editStage} onChange={(e) => setEditStage(e.target.value)} />
                     </div>
                     <div className="space-y-2">

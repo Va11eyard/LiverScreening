@@ -1,15 +1,13 @@
 #!/bin/bash
-# Apply proxy buffer settings for NextAuth large Set-Cookie headers.
 set -euo pipefail
 
-SITE=/etc/nginx/sites-enabled/eye-eye.ropca.kz
+SITE=/etc/nginx/sites-enabled/platform.cornea.kz
 
 sudo python3 <<'PY'
 from pathlib import Path
-p = Path("/etc/nginx/sites-enabled/eye-eye.ropca.kz")
+p = Path("/etc/nginx/sites-enabled/platform.cornea.kz")
 text = p.read_text()
 
-# Remove prior partial patch if reload failed (duplicate client_max_body_size).
 if text.count("client_max_body_size") > 1:
     lines = []
     seen_body = False

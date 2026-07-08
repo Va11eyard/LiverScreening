@@ -2,20 +2,21 @@ package domain
 
 import "testing"
 
-func TestParseGAWeeks(t *testing.T) {
-	v, ok := ParseGAWeeks("28+3")
-	if !ok {
-		t.Fatal("expected ok")
+func TestParseAge(t *testing.T) {
+	v, ok := ParseAge("52")
+	if !ok || v != 52 {
+		t.Fatalf("got %v ok=%v", v, ok)
 	}
-	if v < 28.4 || v > 28.5 {
-		t.Fatalf("got %v", v)
+	v, ok = ParseAge("45,5")
+	if !ok || v != 45.5 {
+		t.Fatalf("got %v ok=%v", v, ok)
 	}
 }
 
 func TestComputeStageRows(t *testing.T) {
 	cases := []Case{
-		{Stage: "Ст. 3", PlusDisease: "Есть 🚨", Aprop: "Да (AP-ROP)", GA: "28+0", BW: 1100, PH: "7.32 (Капиллярный)"},
-		{Stage: "Нет РН", PlusDisease: "Нет", GA: "30+0", BW: 1500},
+		{Stage: "F3", PlusDisease: "Выраженный", Recommendation: "Направление к гепатологу", GA: "58"},
+		{Stage: "F0", PlusDisease: "Нет / минимальный", GA: "42"},
 	}
 	rows := ComputeStageRows(cases)
 	if len(rows) != len(StageOrder)+1 {
@@ -23,12 +24,12 @@ func TestComputeStageRows(t *testing.T) {
 	}
 	found := false
 	for _, r := range rows {
-		if r.Stage == "Ст. 3" && r.Count == 1 && r.PlusDisease == 1 {
+		if r.Stage == "F3" && r.Count == 1 && r.PlusDisease == 1 && r.Aggressive == 1 {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatal("stage 3 row not aggregated correctly")
+		t.Fatal("F3 row not aggregated correctly")
 	}
 }
 
@@ -39,5 +40,17 @@ func TestHospitalMatches(t *testing.T) {
 	}
 	if !HospitalMatches(h, h[:12]) {
 		t.Fatal("prefix match failed")
+	}
+}
+
+func TestIsNormalFinding(t *testing.T) {
+	if !IsNormalFinding(Case{Stage: "F0"}) {
+		t.Fatal("F0 should be normal")
+	}
+	if !IsNormalFinding(Case{PreDiag: "Норма"}) {
+		t.Fatal("Норма pre_diag should be normal")
+	}
+	if IsNormalFinding(Case{Stage: "F2"}) {
+		t.Fatal("F2 should not be normal")
 	}
 }

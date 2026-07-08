@@ -28,20 +28,30 @@ import {
 } from "@/lib/api";
 import { userErrorMessage } from "@/lib/api-errors";
 import { PILOT_HOSPITALS, STAGES } from "@/lib/constants";
+import { calcFib4 } from "@/lib/fib4";
 
 function stageBadge(stage?: string) {
   if (!stage) return "—";
-  if (stage.includes("Ст. 4") || stage.includes("Ст. 5") || stage.includes("AP")) {
-    return <Badge variant="destructive">{stage}</Badge>;
-  }
-  if (stage.includes("Ст. 3")) return <Badge variant="warning">{stage}</Badge>;
-  if (stage.includes("Нет")) return <Badge variant="success">{stage}</Badge>;
+  if (stage === "F4") return <Badge variant="destructive">{stage}</Badge>;
+  if (stage === "F2" || stage === "F3") return <Badge variant="warning">{stage}</Badge>;
+  if (stage === "F0" || stage === "F1") return <Badge variant="success">{stage}</Badge>;
   return <Badge variant="secondary">{stage}</Badge>;
 }
 
-function yesNo(value?: string, positive = "Да") {
-  if (!value) return "—";
-  return value.includes(positive) || value.includes("Есть") ? "Да" : value === "Нет" ? "Нет" : value;
+function usConclusion(row: WeeklyReportRow): string {
+  const fromDiag = ["Норма", "Стеатоз", "Фиброз", "Цирроз"];
+  if (row.pre_diag && fromDiag.includes(row.pre_diag)) return row.pre_diag;
+  if (row.stage === "F4") return "Цирроз";
+  if (row.stage === "F2" || row.stage === "F3") return "Фиброз";
+  if (
+    row.plus_disease &&
+    row.plus_disease !== "Нет / минимальный" &&
+    row.plus_disease !== "Нет"
+  ) {
+    return "Стеатоз";
+  }
+  if (row.rop_form === "Норма") return "Норма";
+  return "—";
 }
 
 function formatAvg(value?: number | null) {
@@ -85,9 +95,11 @@ export default function CasesPage() {
 
   const stats = {
     total: rows.length,
-    aprop: rows.filter((r) => r.aprop === "Да (ХВГ)").length,
-    plus: rows.filter((r) => r.plus_disease?.includes("Есть")).length,
-    doubtful: rows.filter((r) => r.doubtful === "Да").length,
+    hbv: rows.filter((r) => r.aprop === "Да (ХВГ)").length,
+    highRisk: rows.filter(
+      (r) => r.plus_disease === "Умеренный" || r.plus_disease === "Выраженный",
+    ).length,
+    doubtful: rows.filter((r) => r.confidence === "Сомневаюсь").length,
   };
 
   async function downloadExcel() {
@@ -101,7 +113,7 @@ export default function CasesPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `HepatoScreen_Weekly_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `LiverScreening_Weekly_${new Date().toISOString().slice(0, 10)}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Excel скачан");
@@ -114,7 +126,7 @@ export default function CasesPage() {
     if (!isAuthenticated) return;
     try {
       await downloadBlob(`cases/${caseId}/images/archive`, {
-        filename: `HepatoScreen_${caseId}_images.zip`,
+        filename: `LiverScreening_${caseId}_images.zip`,
       });
       toast.success("Снимки скачаны");
     } catch (e) {
@@ -126,7 +138,7 @@ export default function CasesPage() {
     if (!isAuthenticated) return;
     try {
       await downloadBlob(`reports/training-export${querySuffix}`, {
-        filename: `HepatoScreen_Training_${new Date().toISOString().slice(0, 10)}.zip`,
+        filename: `LiverScreening_Training_${new Date().toISOString().slice(0, 10)}.zip`,
       });
       toast.success("Экспорт для ML скачан");
     } catch (e) {
@@ -134,7 +146,7 @@ export default function CasesPage() {
     }
   }
 
-  const colSpan = isCoordinator ? 18 : 17;
+  const colSpan = isCoordinator ? 15 : 14;
 
   return (
     <div className="space-y-6">
@@ -173,16 +185,16 @@ export default function CasesPage() {
             />
           </div>
           <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-            <Label className="text-sm font-medium text-hub-heading">Больница</Label>
+            <Label className="text-sm font-medium text-hub-heading">ПМСП</Label>
             <Select
               value={filters.hospital || "all"}
               onValueChange={(v) => setFilters((f) => ({ ...f, hospital: v === "all" ? "" : (v ?? "") }))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Все больницы" />
+                <SelectValue placeholder="Все ПМСП" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Все больницы</SelectItem>
+                <SelectItem value="all">Все ПМСП</SelectItem>
                 {PILOT_HOSPITALS.map((h) => (
                   <SelectItem key={h} value={h}>
                     {h}
@@ -210,7 +222,7 @@ export default function CasesPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-hub-heading">Стадия</Label>
+            <Label className="text-sm font-medium text-hub-heading">Стадия фиброза</Label>
             <Select
               value={filters.stage || "all"}
               onValueChange={(v) => setFilters((f) => ({ ...f, stage: v === "all" ? "" : (v ?? "") }))}
@@ -244,16 +256,16 @@ export default function CasesPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Всего кейсов" value={stats.total} />
-        <KpiCard title="ХВГ" value={stats.aprop} variant="danger" />
-        <KpiCard title="Plus Disease" value={stats.plus} variant="warning" />
-        <KpiCard title="Сомнительных" value={stats.doubtful} />
+        <KpiCard title="ХВГ" value={stats.hbv} variant="danger" />
+        <KpiCard title="Высокий риск (стеатоз)" value={stats.highRisk} variant="warning" />
+        <KpiCard title="Сомневаются" value={stats.doubtful} />
       </div>
 
       {isCoordinator ? (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Стадии и гестация</CardTitle>
+              <CardTitle className="text-base">Стадии фиброза</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto p-0 pb-4">
               <Table>
@@ -261,16 +273,15 @@ export default function CasesPage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead>Стадия</TableHead>
                     <TableHead>Кол-во</TableHead>
-                    <TableHead>Plus</TableHead>
-                    <TableHead>Агресс.</TableHead>
-                    <TableHead>Ср. гест.</TableHead>
-                    <TableHead>Ср. масса</TableHead>
+                    <TableHead>Высокий риск</TableHead>
+                    <TableHead>К гепатологу</TableHead>
+                    <TableHead>Ср. возраст</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stagesLoading && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-hub-muted">
+                      <TableCell colSpan={5} className="text-center text-hub-muted">
                         Загрузка…
                       </TableCell>
                     </TableRow>
@@ -283,7 +294,6 @@ export default function CasesPage() {
                         <TableCell>{r.plus_disease}</TableCell>
                         <TableCell>{r.aggressive}</TableCell>
                         <TableCell>{formatAvg(r.avg_ga)}</TableCell>
-                        <TableCell>{formatAvg(r.avg_bw)}</TableCell>
                       </TableRow>
                     ))}
                 </TableBody>
@@ -301,10 +311,10 @@ export default function CasesPage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead>Больница</TableHead>
                     <TableHead>Всего</TableHead>
-                    <TableHead>РН</TableHead>
-                    <TableHead>1–2</TableHead>
-                    <TableHead>3–5</TableHead>
-                    <TableHead>Plus</TableHead>
+                    <TableHead>Норма</TableHead>
+                    <TableHead>F0–F1</TableHead>
+                    <TableHead>F2–F3</TableHead>
+                    <TableHead>F4/Цирроз</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -342,22 +352,19 @@ export default function CasesPage() {
               <TableRow className="hover:bg-transparent">
                 <TableHead>ID кейса</TableHead>
                 <TableHead>Дата</TableHead>
-                <TableHead>Больница</TableHead>
+                <TableHead>ПМСП</TableHead>
                 <TableHead>Врач</TableHead>
                 <TableHead>Пациент</TableHead>
-                <TableHead>Гестация</TableHead>
-                <TableHead>Масса (г)</TableHead>
-                <TableHead>ПКВ</TableHead>
-                <TableHead>pH</TableHead>
-                <TableHead>Стадия</TableHead>
-                <TableHead>Plus</TableHead>
-                <TableHead>Форма РН</TableHead>
-                <TableHead>Диагноз врача</TableHead>
+                <TableHead>Возраст</TableHead>
+                <TableHead>Этиология</TableHead>
+                <TableHead>FIB-4</TableHead>
+                <TableHead>УЗИ-заключение</TableHead>
+                <TableHead>Стадия F0–F4</TableHead>
+                <TableHead>Уверенность врача</TableHead>
                 <TableHead>Совпадение с AI</TableHead>
-                <TableHead>ХВГ</TableHead>
-                <TableHead>Сомнит.</TableHead>
+                <TableHead>Маршрут</TableHead>
+                <TableHead>Этап скрининга</TableHead>
                 {isCoordinator ? <TableHead>Снимки</TableHead> : null}
-                <TableHead>Примечания</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -391,16 +398,16 @@ export default function CasesPage() {
                   </TableCell>
                   <TableCell>{r.patient_label || "—"}</TableCell>
                   <TableCell>{r.ga || "—"}</TableCell>
-                  <TableCell>{r.bw ? r.bw : "—"}</TableCell>
-                  <TableCell>{r.pca ? r.pca : "—"}</TableCell>
-                  <TableCell>{r.ph || "—"}</TableCell>
+                  <TableCell>{r.etiology || "—"}</TableCell>
+                  <TableCell>{calcFib4(r.ga, r.ph, r.pca, r.bw)}</TableCell>
+                  <TableCell>{usConclusion(r)}</TableCell>
                   <TableCell>{stageBadge(r.stage)}</TableCell>
-                  <TableCell>{yesNo(r.plus_disease, "Есть")}</TableCell>
-                  <TableCell className="max-w-[100px] truncate">{r.rop_form || "—"}</TableCell>
-                  <TableCell>{r.pre_diag || "—"}</TableCell>
+                  <TableCell>{r.confidence || "—"}</TableCell>
                   <TableCell>{r.ai_match ?? "—"}</TableCell>
-                  <TableCell>{yesNo(r.aprop, "Да (ХВГ)")}</TableCell>
-                  <TableCell>{yesNo(r.doubtful)}</TableCell>
+                  <TableCell className="max-w-[120px] truncate" title={r.recommendation}>
+                    {r.recommendation || "—"}
+                  </TableCell>
+                  <TableCell>{r.visit || "—"}</TableCell>
                   {isCoordinator ? (
                     <TableCell>
                       {(r.image_count ?? 0) > 0 ? (
@@ -419,9 +426,6 @@ export default function CasesPage() {
                       )}
                     </TableCell>
                   ) : null}
-                  <TableCell className="max-w-[140px] truncate" title={r.notes}>
-                    {r.notes || "—"}
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

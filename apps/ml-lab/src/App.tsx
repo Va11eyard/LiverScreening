@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Activity, Loader2 } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { Activity, Calculator, Loader2 } from "lucide-react";
 
 import { checkHealth, runInference, triageClinical, type InferenceResult } from "./api";
 import { AnalysisSkeleton } from "@/components/AnalysisSkeleton";
@@ -13,8 +13,33 @@ import { MlLabHeader } from "@/components/MlLabHeader";
 import { MlLabTabs, type LabTab } from "@/components/MlLabTabs";
 import { ResultCard } from "@/components/ResultCard";
 
+type ClinicalTriageResponse = {
+  fib4: number;
+  apri: number;
+  risk_tier: string;
+  recommendation: string;
+  highlighted_fields?: string[];
+};
+
+function normalizeClinicalResult(data: ClinicalTriageResponse): Record<string, unknown> {
+  return {
+    fib4: String(data.fib4),
+    apri: String(data.apri),
+    risk_tier: data.risk_tier,
+    zone: data.recommendation,
+    recommendation: data.recommendation,
+    highlighted_fields: data.highlighted_fields,
+    confidence: "0.85",
+    explanation: {
+      summary: "Расчёт FIB-4 и APRI по лабораторным данным без анализа УЗИ.",
+      recommendation: data.recommendation,
+    },
+  };
+}
+
 export default function App() {
   const [tab, setTab] = useState<LabTab>("full");
+  const [resultTab, setResultTab] = useState<LabTab | null>(null);
   const [online, setOnline] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +54,16 @@ export default function App() {
   const [platelets, setPlatelets] = useState("180");
   const [hbv, setHbv] = useState(false);
   const [etiology, setEtiology] = useState("MASLD/НАЖБП");
+
+  const handleTabChange = useCallback((next: LabTab) => {
+    setTab(next);
+    setError("");
+    setShowExplain(false);
+    if (resultTab && resultTab !== next) {
+      setResult(null);
+      setResultTab(null);
+    }
+  }, [resultTab]);
 
   useEffect(() => {
     void checkHealth().then(setOnline);
@@ -48,22 +83,24 @@ export default function App() {
     e.preventDefault();
     setError("");
     setResult(null);
+    setResultTab(null);
     setShowExplain(false);
     setLoading(true);
     try {
       if (tab === "clinical") {
-        const data = await triageClinical({
+        const data = (await triageClinical({
           age: Number(age),
           ast: Number(ast),
           alt: Number(alt),
           platelets: Number(platelets),
           hbv_positive: hbv,
           etiology,
-        });
-        setResult(data);
+        })) as ClinicalTriageResponse;
+        setResult(normalizeClinicalResult(data));
+        setResultTab("clinical");
       } else {
         if (!file) {
-          setError("Загрузите УЗИ-снимок");
+          setError("Загрузите УЗИ-снимок (JPG или PNG)");
           setLoading(false);
           return;
         }
@@ -79,6 +116,7 @@ export default function App() {
           file,
         );
         setResult(data);
+        setResultTab("full");
         setShowExplain(true);
       }
     } catch (err) {
@@ -89,13 +127,21 @@ export default function App() {
   }
 
   const inference = result as InferenceResult | null;
+  const clinicalOnly = resultTab === "clinical";
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-8 pb-16">
       <MlLabHeader online={online} />
-      <MlLabTabs tab={tab} onTab={setTab} />
+      <MlLabTabs tab={tab} onTab={handleTabChange} />
 
       <form onSubmit={onSubmit} className="mb-6 space-y-5">
+        {tab === "clinical" && (
+          <p className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 text-sm text-teal-900">
+            Режим <strong>только FIB-4 / APRI</strong> — введите клинические данные. УЗИ не требуется,
+            vision-модель не вызывается.
+          </p>
+        )}
+
         <ClinicalForm
           age={age}
           ast={ast}
@@ -110,22 +156,32 @@ export default function App() {
           onEtiology={setEtiology}
           onHbv={setHbv}
         />
+
         {tab === "full" && (
-          <FormSection title="Визуализация" description="УЗИ-снимок печени для inference">
+          <FormSection
+            title="Загрузка УЗИ"
+            description="Перетащите JPG или PNG снимок печени для vision-модели и fusion score (клиника 0.7 + УЗИ 0.3)"
+          >
             <DropZone file={file} preview={preview} onFile={setFile} />
           </FormSection>
         )}
+
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={loading} size="lg" className="w-full sm:w-auto">
             {loading ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Анализ…
+                {tab === "clinical" ? "Расчёт…" : "Анализ…"}
+              </>
+            ) : tab === "clinical" ? (
+              <>
+                <Calculator className="size-4" />
+                Рассчитать FIB-4 / APRI
               </>
             ) : (
               <>
                 <Activity className="size-4" />
-                Запустить модель
+                Запустить УЗИ + клиника
               </>
             )}
           </Button>
@@ -166,10 +222,10 @@ export default function App() {
         </Card>
       )}
 
-      {result && !loading && (
+      {result && !loading && resultTab && (
         <>
-          <ResultCard result={result as Record<string, unknown>} clinicalOnly={tab === "clinical"} />
-          {tab === "full" && preview && inference?.explanation && (
+          <ResultCard result={result as Record<string, unknown>} clinicalOnly={clinicalOnly} />
+          {resultTab === "full" && preview && inference?.explanation && (
             <ExplainOverlay
               imageUrl={preview}
               region={inference.findings?.[0]?.region}
@@ -179,14 +235,6 @@ export default function App() {
           )}
         </>
       )}
-
-      <footer className="mt-10 text-center text-sm text-slate-500">
-        Клинические кейсы и регистр — на{" "}
-        <a href="http://localhost:3004" className="font-medium text-teal-600 hover:underline">
-          localhost:3004
-        </a>
-        . Обучение модели — RTX 5050 (EfficientNet-B3).
-      </footer>
     </div>
   );
 }

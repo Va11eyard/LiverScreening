@@ -1,12 +1,13 @@
-# LiverScreening (HepatoScreen)
+# LiverScreening
 
 Прототип скрининга патологий печени и ХВГ для ПМСП — **три отдельных контура**:
 
 | Сервис | Порт | Назначение |
 |--------|------|------------|
-| **HepatoScreen** (`apps/web`) | 3004 | Клиника: кейсы, регистр, экспорт датасета |
+| **LiverScreening** (`apps/web`) | 3004 | Клиника: кейсы, регистр, экспорт датасета |
 | **ML Lab** (`apps/ml-lab`) | 3005 | Загрузка УЗИ, тест модели, анимация explainability |
-| **ML API** (`services/ml-api`) | 8000 | FIB-4, APRI, inference (общий backend для обоих UI) |
+| **Публичный скринер** (`apps/liver-screening`) | 3006 | Анкета риска «Love Your Liver» |
+| **ML API** (`services/ml-api`) | 8000 | FIB-4, APRI, inference (общий backend для UI) |
 | **Go API** | 8088 | Авторизация, кейсы, изображения, отчёты |
 
 ## Быстрый старт
@@ -27,16 +28,26 @@ pnpm dev
 
 | Команда | Порт | Приложение |
 |---------|------|------------|
-| `pnpm dev` | 3004 + 3005 | Оба фронта параллельно |
-| `pnpm dev:web` | 3004 | HepatoScreen (клиника) |
-| `pnpm dev:ml-lab` | 3005 | ML Lab (тест модели) |
+| `pnpm dev` | 3004 + 3005 + 3006 | Все фронтенды параллельно |
+| `pnpm dev:web` | 3004 | LiverScreening (клиника) |
+| `pnpm dev:ml-lab` | 3005 | ML Lab |
+| `pnpm dev:screening` | 3006 | Публичный скринер |
 
 Или одной командой: `.\deploy\dev-web.ps1` (Docker + `pnpm dev`).
 
 - Клиническая платформа: http://localhost:3004  
 - ML Lab: http://localhost:3005  
+- Публичный скринер: http://localhost:3006  
 - Go API: http://localhost:8088  
 - ML API docs: http://localhost:8000/docs  
+
+**Продакшен (cornea.kz):** по одному домену на приложение — см. `infra/domains.env.example`
+
+| Приложение | Домен |
+|------------|-------|
+| Клиническая платформа | `platform.cornea.kz` |
+| ML Lab | `ml.cornea.kz` |
+| Публичный скринер | `screening.cornea.kz` |
 
 **Логин (только платформа):** `coordinator@liver.kz` / `ChangeMe123!`
 
@@ -59,7 +70,7 @@ cd training
 ```
 
 Веса: `services/ml-api/models/liver_efficientnet_b3_best.pth` (gitignored).  
-Документация Kimi: `docs/hepatoscreen/`
+Документация: `docs/liver-screening/`
 
 ## Тесты ML API
 
@@ -69,10 +80,6 @@ python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\pytest tests/ -v
 ```
-
-## Архив
-
-`docs/` — retinopathy pipeline (gitignored): `retinapathy-app`, `training-code` (PyTorch / RTX 5050 — позже).
 
 ## Дисклеймер
 

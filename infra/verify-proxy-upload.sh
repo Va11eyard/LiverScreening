@@ -1,10 +1,8 @@
 #!/bin/bash
-# Verify image upload via /api/proxy after login.
 set -euo pipefail
 
-WEB="${WEB_URL:-https://eye-eye.ropca.kz}"
-EMAIL="${TEST_EMAIL:-doctor@eyeeye.kz}"
-# shellcheck disable=SC1091
+WEB="${WEB_URL:-https://platform.cornea.kz}"
+EMAIL="${TEST_EMAIL:-doctor@liver.kz}"
 source "$(dirname "$0")/load-test-password.sh"
 PASS="$(load_test_password "$EMAIL")"
 COOKIE=$(mktemp)

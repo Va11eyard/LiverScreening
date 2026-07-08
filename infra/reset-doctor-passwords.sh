@@ -1,11 +1,9 @@
 #!/bin/bash
-# Generate unique per-doctor passwords and apply via seed-users.
-# Does NOT rotate coordinator password or touch case data.
 set -euo pipefail
 export PATH="/usr/local/go/bin:$PATH"
 
-ENV=/opt/eyeeye-api/.env
-PASS_FILE=/opt/eyeeye-api/doctor-passwords.env
+ENV=/opt/liverscreening-api/.env
+PASS_FILE=/opt/liverscreening-api/doctor-passwords.env
 
 if [ ! -f "$ENV" ]; then
   echo "Missing $ENV — run deploy first" >&2
@@ -13,17 +11,16 @@ if [ ! -f "$ENV" ]; then
 fi
 
 DOCTORS=(
-  doctor@eyeeye.kz
-  doctor2@eyeeye.kz
-  doctor3@eyeeye.kz
-  doctor4@eyeeye.kz
-  doctor5@eyeeye.kz
-  doctor6@eyeeye.kz
-  doctor7@eyeeye.kz
+  doctor@liver.kz
+  doctor2@liver.kz
+  doctor3@liver.kz
+  doctor4@liver.kz
+  doctor5@liver.kz
+  doctor6@liver.kz
+  doctor7@liver.kz
 )
 
 sudo tee "$PASS_FILE" >/dev/null <<'HDR'
-# email=password (one unique password per doctor — keep this file secret)
 HDR
 
 for email in "${DOCTORS[@]}"; do
@@ -38,9 +35,8 @@ if ! sudo grep -q '^SEED_DOCTOR_PASSWORDS_FILE=' "$ENV"; then
   echo "SEED_DOCTOR_PASSWORDS_FILE=${PASS_FILE}" | sudo tee -a "$ENV" >/dev/null
 fi
 
-cd /opt/eyeeyeupload-src
+cd /opt/liverscreening-src
 set -a
-# shellcheck disable=SC1091
 eval "$(sudo grep -v '^#' "$ENV" | sed 's/^/export /')"
 set +a
 

@@ -1,11 +1,9 @@
 #!/bin/bash
-# Verify coordinator API login matches SEED_ADMIN_PASSWORD / credentials file.
 set -euo pipefail
 
-API="${API_URL:-http://127.0.0.1:8088}"
-EMAIL="${COORDINATOR_EMAIL:-coordinator@eyeeye.kz}"
+API="${API_URL:-http://127.0.0.1:8089}"
+EMAIL="${COORDINATOR_EMAIL:-coordinator@liver.kz}"
 
-# shellcheck disable=SC1091
 source "$(dirname "$0")/load-test-password.sh"
 PASS="$(load_test_password "$EMAIL")"
 
