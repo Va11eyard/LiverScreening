@@ -7,10 +7,12 @@ EMAIL="${COORDINATOR_EMAIL:-coordinator@liver.kz}"
 source "$(dirname "$0")/load-test-password.sh"
 PASS="$(load_test_password "$EMAIL")"
 
+json_payload=$(EMAIL="$EMAIL" PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"email":os.environ["EMAIL"],"password":os.environ["PASS"]}))')
+
 for attempt in 1 2 3 4 5; do
   CODE=$(curl -s -o /tmp/coord-login.json -w "%{http_code}" -X POST "${API}/api/v1/auth/login" \
     -H "Content-Type: application/json" \
-    -d "{\"email\":\"${EMAIL}\",\"password\":\"${PASS}\"}" || true)
+    -d "$json_payload" || true)
   if [ "${CODE:-}" = "200" ]; then
     break
   fi
