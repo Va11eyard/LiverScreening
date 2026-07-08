@@ -1,5 +1,5 @@
 {
-  "version": "effb4_binary_v1",
+  "version": "effb4_ens_seed42",
   "val_auc": 0.7706339712918661,
   "test_auc": 0.5059332721852786,
   "test_acc": 0.6736842105263158,
@@ -13,7 +13,7 @@
   "input_size": 380,
   "loss": "ce",
   "seed": 42,
-  "date": "2026-07-09",
-  "status": "production",
-  "notes": "effb4_binary_v1"
+  "date": "2026-07-08",
+  "status": "candidate",
+  "notes": "effb4_ens_seed42"
 }

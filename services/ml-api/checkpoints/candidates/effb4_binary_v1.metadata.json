@@ -13,7 +13,7 @@
   "input_size": 380,
   "loss": "ce",
   "seed": 42,
-  "date": "2026-07-09",
-  "status": "production",
+  "date": "2026-07-08",
+  "status": "candidate",
   "notes": "effb4_binary_v1"
 }

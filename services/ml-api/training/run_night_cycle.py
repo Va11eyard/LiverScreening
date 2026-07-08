@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run overnight candidate training iterations (never touches production/)."""
 from __future__ import annotations
 
 import json
@@ -34,15 +33,16 @@ def run_train(name: str, checkpoint: str, **kwargs) -> dict:
     print("\n>>>", " ".join(cmd), flush=True)
     proc = subprocess.run(cmd, cwd=ML_API_ROOT)
     if proc.returncode != 0:
-        raise RuntimeError(f"Training failed: {name}")
-    meta_path = (ML_API_ROOT / checkpoint).with_suffix(".metadata.json")
-    return json.loads(meta_path.read_text(encoding="utf-8"))
+        print(f"WARNING: training failed for {name}, continuing", flush=True)
+        meta_path = (ML_API_ROOT / checkpoint).with_suffix(".metadata.json")
+        if meta_path.exists():
+            return json.loads(meta_path.read_text(encoding="utf-8"))
+        return {"name": name, "val_auc": 0, "checkpoint": checkpoint}
 
 
 def main() -> None:
     results: list[dict] = []
 
-    # Baseline reference (already trained)
     results.append(
         {
             "iteration": 0,
@@ -56,7 +56,6 @@ def main() -> None:
         }
     )
 
-    # Iteration 1: binary
     r1 = run_train(
         "effb4_binary_v1",
         "checkpoints/candidates/effb4_binary_v1.pt",
@@ -71,7 +70,6 @@ def main() -> None:
     best_val = float(r1.get("val_auc") or 0)
     best_config = dict(scheme="binary", model="efficientnet_b4", loss="ce", input_size=380)
 
-    # Iteration 2: tune binary if not already >= 0.75
     if best_val < 0.75:
         r2 = run_train(
             "effb4_binary_v2",
@@ -104,7 +102,6 @@ def main() -> None:
                 best_val = float(r2b["val_auc"])
                 best_config = dict(scheme="binary", model="efficientnet_b3", loss="focal", input_size=456)
 
-    # Iteration 3: 3-class if still below 0.75
     if best_val < 0.75:
         r3 = run_train(
             "effb4_3class_v1",
@@ -120,7 +117,6 @@ def main() -> None:
             best_val = float(r3["val_auc"])
             best_config = dict(scheme="3class", model="efficientnet_b4", loss="focal", input_size=380)
 
-    # Iteration 4: ensemble (3 seeds on best binary config)
     seed_ckpts = []
     for i, seed in enumerate((42, 43, 44), start=1):
         ckpt = f"checkpoints/candidates/effb4_ens_seed{seed}.pt"

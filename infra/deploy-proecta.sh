@@ -375,6 +375,7 @@ if [ ! -d "$ML_API_VENV" ]; then
   sudo -u www-data python3 -m venv "$ML_API_VENV"
 fi
 sudo -u www-data "$ML_API_VENV/bin/pip" install -q -r requirements.txt -r requirements-cds.txt
+sudo -u www-data "$ML_API_VENV/bin/pip" install -q -r requirements-inference.txt --extra-index-url https://download.pytorch.org/whl/cpu
 sudo systemctl restart liverscreening-ml-api || sudo systemctl start liverscreening-ml-api
 
 echo "Building ML Lab and public screener..."

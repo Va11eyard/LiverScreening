@@ -89,7 +89,10 @@ def build_model(model_name: str, num_classes: int) -> nn.Module:
 def binary_macro_auc(y_true: np.ndarray, y_prob: np.ndarray) -> float | None:
     if len(np.unique(y_true)) < 2:
         return None
-    return float(roc_auc_score(y_true, y_prob[:, 1]))
+    scores = y_prob[:, 1]
+    if not np.isfinite(scores).all():
+        return None
+    return float(roc_auc_score(y_true, scores))
 
 def compute_val_auc(y_true: np.ndarray, y_prob: np.ndarray, num_classes: int) -> float | None:
     if num_classes == 2:
