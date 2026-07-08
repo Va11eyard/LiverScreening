@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import logging
+import sys
+from pathlib import Path
 from typing import Any
 
 from PIL import Image
@@ -15,21 +18,21 @@ from app.triage import (
     run_clinical_triage,
 )
 
+logger = logging.getLogger(__name__)
+
+TRAINING_ROOT = Path(__file__).resolve().parent.parent
+if str(TRAINING_ROOT) not in sys.path:
+    sys.path.insert(0, str(TRAINING_ROOT))
+
+VISION_WEIGHT = 0.30
+CLINICAL_WEIGHT = 0.70
+
 
 def _parse_float(val: Any, default: float = 0.0) -> float:
     if val is None or val == "":
         return default
     try:
         return float(val)
-    except (TypeError, ValueError):
-        return default
-
-
-def _parse_int(val: Any, default: int = 0) -> int:
-    if val is None or val == "":
-        return default
-    try:
-        return int(float(val))
     except (TypeError, ValueError):
         return default
 
@@ -55,13 +58,41 @@ def metadata_to_clinical(meta: dict[str, Any]) -> ClinicalInput:
 def _vision_stub(image_bytes: bytes) -> tuple[str, float]:
     digest = hashlib.sha256(image_bytes).hexdigest()
     bucket = int(digest[:8], 16) % 100
-    if bucket < 25:
+    if bucket < 50:
         return "Норма", 0.72
-    if bucket < 55:
-        return "Гиперэхогенность паренхимы", 0.81
-    if bucket < 80:
-        return "Неоднородная эхоструктура", 0.87
-    return "Признаки стеатоза / фиброза", 0.91
+    return "Стеатоз / NAFLD", 0.84
+
+
+def _run_vision(image_bytes: bytes) -> tuple[str, float, bool]:
+    from app.model_loader import is_stub_mode, run_vision
+
+    if is_stub_mode():
+        finding, conf = _vision_stub(image_bytes)
+        return finding, conf, True
+    try:
+        finding, conf = run_vision(image_bytes)
+        return finding, conf, False
+    except Exception as exc:
+        logger.warning("Vision model failed, using stub: %s", exc)
+        finding, conf = _vision_stub(image_bytes)
+        return finding, conf, True
+
+
+def _clinical_risk_score(triage) -> float:
+    fib4_norm = min(triage.fib4 / 5.0, 1.0)
+    apri_norm = min(triage.apri / 3.0, 1.0)
+    return CLINICAL_WEIGHT * (0.6 * fib4_norm + 0.4 * apri_norm)
+
+
+def _apply_fusion(triage, vision_conf: float, has_image: bool) -> None:
+    if not has_image:
+        return
+    clinical_score = _clinical_risk_score(triage)
+    fused = clinical_score + VISION_WEIGHT * vision_conf
+    if triage.risk_tier == "low" and fused >= 0.35:
+        triage.risk_tier = "watch"  # type: ignore[misc]
+    if triage.risk_tier == "watch" and fused >= 0.55:
+        triage.risk_tier = "urgent"  # type: ignore[misc]
 
 
 def validate_image(image_bytes: bytes) -> None:
@@ -70,16 +101,18 @@ def validate_image(image_bytes: bytes) -> None:
 
 
 def run_inference(metadata: dict[str, Any], image_bytes: bytes | None) -> dict[str, Any]:
+    from app.model_loader import is_stub_mode
+
     clinical = metadata_to_clinical(metadata)
     triage = run_clinical_triage(clinical)
 
     us_finding = None
     vision_conf = 0.75
+    used_stub = is_stub_mode()
     if image_bytes:
         validate_image(image_bytes)
-        us_finding, vision_conf = _vision_stub(image_bytes)
-        if triage.risk_tier == "low" and vision_conf >= 0.85:
-            triage.risk_tier = "watch"  # type: ignore[misc]
+        us_finding, vision_conf, used_stub = _run_vision(image_bytes)
+        _apply_fusion(triage, vision_conf, True)
 
     confidence = round(max(vision_conf, min(0.99, triage.fib4 / 5)), 2)
     explanation = build_explanation(
@@ -107,4 +140,6 @@ def run_inference(metadata: dict[str, Any], image_bytes: bytes | None) -> dict[s
             }
         ],
         "highlighted_fields": triage.highlighted_fields,
+        "stub_mode": used_stub and is_stub_mode(),
+        "model_loaded": not is_stub_mode(),
     }

@@ -1,5 +1,6 @@
 # Archived reference code (retinopathy pipeline)
-docs/
+docs/*
+!docs/hepatoscreen/
 
 # Dependencies
 node_modules/

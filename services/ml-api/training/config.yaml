@@ -1,0 +1,16 @@
+model: efficientnet_b3
+num_classes: 2
+input_size: 300
+batch_size: 8
+gradient_accumulation: 2
+epochs: 30
+lr: 0.001
+weight_decay: 0.0001
+early_stopping_patience: 8
+num_workers: 2
+seed: 42
+use_amp: true
+grad_clip: 1.0
+save_dir: ../models/
+csv_train: ../data/processed/metadata_train.csv
+csv_val: ../data/processed/metadata_val.csv

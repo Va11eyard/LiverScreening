@@ -1,12 +1,19 @@
 import { FormEvent, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 import { checkHealth, runInference, triageClinical, type InferenceResult } from "./api";
-import { ExplainOverlay } from "./components/ExplainOverlay";
-
-type Tab = "clinical" | "full";
+import { AnalysisSkeleton } from "@/components/AnalysisSkeleton";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ClinicalForm } from "@/components/ClinicalForm";
+import { DropZone } from "@/components/DropZone";
+import { ExplainOverlay } from "@/components/ExplainOverlay";
+import { MlLabHeader } from "@/components/MlLabHeader";
+import { MlLabTabs, type LabTab } from "@/components/MlLabTabs";
+import { ResultCard } from "@/components/ResultCard";
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("full");
+  const [tab, setTab] = useState<LabTab>("full");
   const [online, setOnline] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -83,84 +90,77 @@ export default function App() {
   const inference = result as InferenceResult | null;
 
   return (
-    <div className="page">
-      <header className="header">
-        <div>
-          <p className="eyebrow">Прототип · отдельный контур</p>
-          <h1>HepatoScreen ML Lab</h1>
-          <p className="muted">Загрузка УЗИ и тестирование модели без клинического регистра</p>
-        </div>
-        <div className="status">
-          <span className={online ? "dot ok" : "dot bad"} />
-          ML API {online ? "online" : "offline"}
-        </div>
-      </header>
+    <div className="mx-auto min-h-screen max-w-4xl px-4 py-8 pb-16">
+      <MlLabHeader online={online} />
+      <MlLabTabs tab={tab} onTab={setTab} />
 
-      <nav className="tabs">
-        <button type="button" className={tab === "full" ? "tab active" : "tab"} onClick={() => setTab("full")}>
-          УЗИ + клиника
-        </button>
-        <button
-          type="button"
-          className={tab === "clinical" ? "tab active" : "tab"}
-          onClick={() => setTab("clinical")}
-        >
-          Только FIB-4 / APRI
-        </button>
-        <a className="tab link" href="http://localhost:3004" target="_blank" rel="noreferrer">
-          → Клиническая платформа
-        </a>
-      </nav>
+      <Card className="mb-6">
+        <form onSubmit={onSubmit} className="space-y-6">
+          <ClinicalForm
+            age={age}
+            ast={ast}
+            alt={alt}
+            platelets={platelets}
+            etiology={etiology}
+            hbv={hbv}
+            onAge={setAge}
+            onAst={setAst}
+            onAlt={setAlt}
+            onPlatelets={setPlatelets}
+            onEtiology={setEtiology}
+            onHbv={setHbv}
+          />
+          {tab === "full" && <DropZone file={file} preview={preview} onFile={setFile} />}
+          {tab === "full" && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/demo-samples.json");
+                  const data = await res.json();
+                  const demo = data.nfld_demo;
+                  setAge(demo.age);
+                  setAst(demo.ast);
+                  setAlt(demo.alt);
+                  setPlatelets(demo.platelets);
+                  setHbv(demo.hbv);
+                  setEtiology(demo.etiology);
+                  const imgRes = await fetch("/samples/nfld-id6.jpg");
+                  const blob = await imgRes.blob();
+                  setFile(new File([blob], "nfld-id6.jpg", { type: blob.type || "image/jpeg" }));
+                  setError("");
+                } catch {
+                  setError("Не удалось загрузить демо-пример NFLD");
+                }
+              }}
+            >
+              Загрузить пример NFLD
+            </Button>
+          )}
+          <Button type="submit" disabled={loading} size="lg" className="w-full sm:w-auto">
+            {loading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Анализ…
+              </>
+            ) : (
+              "Запустить модель"
+            )}
+          </Button>
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+        </form>
+      </Card>
 
-      <form className="card" onSubmit={onSubmit}>
-        <div className="grid">
-          <label>
-            Возраст
-            <input value={age} onChange={(e) => setAge(e.target.value)} type="number" />
-          </label>
-          <label>
-            АСТ
-            <input value={ast} onChange={(e) => setAst(e.target.value)} type="number" />
-          </label>
-          <label>
-            АЛТ
-            <input value={alt} onChange={(e) => setAlt(e.target.value)} type="number" />
-          </label>
-          <label>
-            Тромбоциты
-            <input value={platelets} onChange={(e) => setPlatelets(e.target.value)} type="number" />
-          </label>
-          <label className="wide">
-            Этиология
-            <input value={etiology} onChange={(e) => setEtiology(e.target.value)} />
-          </label>
-          <label className="check">
-            <input type="checkbox" checked={hbv} onChange={(e) => setHbv(e.target.checked)} />
-            ХВГ+
-          </label>
-        </div>
+      {loading && (
+        <Card>
+          <AnalysisSkeleton />
+        </Card>
+      )}
 
-        {tab === "full" && (
-          <label className="upload wide">
-            УЗИ печени
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-        )}
-
-        <button type="submit" className="primary" disabled={loading}>
-          {loading ? "Анализ…" : "Запустить модель"}
-        </button>
-        {error && <p className="error">{error}</p>}
-      </form>
-
-      {result && (
-        <section className="card">
-          <h2>Результат</h2>
-          <pre className="json">{JSON.stringify(result, null, 2)}</pre>
+      {result && !loading && (
+        <>
+          <ResultCard result={result as Record<string, unknown>} clinicalOnly={tab === "clinical"} />
           {tab === "full" && preview && inference?.explanation && (
             <ExplainOverlay
               imageUrl={preview}
@@ -169,12 +169,15 @@ export default function App() {
               active={showExplain}
             />
           )}
-        </section>
+        </>
       )}
 
-      <footer className="footer muted">
-        Клинические кейсы и регистр — на <a href="http://localhost:3004">localhost:3004</a>. Обучение модели — позже на
-        GPU (RTX 5050).
+      <footer className="mt-10 text-center text-sm text-slate-500">
+        Клинические кейсы и регистр — на{" "}
+        <a href="http://localhost:3004" className="font-medium text-teal-600 hover:underline">
+          localhost:3004
+        </a>
+        . Обучение модели — RTX 5050 (EfficientNet-B3).
       </footer>
     </div>
   );

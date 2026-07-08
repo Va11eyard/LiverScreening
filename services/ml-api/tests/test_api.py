@@ -13,7 +13,25 @@ client = TestClient(app)
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json()["status"] == "healthy"
+    data = r.json()
+    assert data["status"] == "healthy"
+    assert "stub_mode" in data
+
+
+def test_inference_with_model_flags():
+    img = Image.new("RGB", (128, 128), color=(120, 100, 80))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    metadata = '{"age":"55","ast":"65","alt":"70","platelets":"140","hbv":"yes","etiology":"HBV"}'
+    r = client.post(
+        "/inference",
+        data={"metadata": metadata},
+        files={"image": ("us.png", buf.getvalue(), "image/png")},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert "stub_mode" in body
+    assert "model_loaded" in body
 
 
 def test_fib4_apri():

@@ -1,0 +1,12 @@
+{
+  "nfld_demo": {
+    "image": "services/ml-api/data/raw/NFLD_UltraSound_Image_&_Clinical_Dataset/images/benign/id6.jpg",
+    "age": "55",
+    "ast": "42",
+    "alt": "48",
+    "platelets": "220",
+    "hbv": false,
+    "etiology": "NAFLD"
+  },
+  "zenodo_demo_note": "Use any extracted frame from data/raw/zenodo/png/ after training"
+}

@@ -43,6 +43,24 @@ pnpm dev
 Перед первым `pnpm dev:web` скопируйте `apps/web/.env.local.example` → `apps/web/.env.local`.  
 Для ML Lab: `apps/ml-lab/.env.example` → `apps/ml-lab/.env`.
 
+## Обучение модели (RTX 5050, CUDA 12.8)
+
+```powershell
+cd services\ml-api
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt -r requirements-train.txt
+.\.venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+.\.venv\Scripts\python training\download_datasets.py
+.\.venv\Scripts\python training\merge_datasets.py
+cd training
+..\.venv\Scripts\python train_efficientnet.py
+..\.venv\Scripts\python export_onnx.py
+..\.venv\Scripts\python eval_model.py
+```
+
+Веса: `services/ml-api/models/liver_efficientnet_b3_best.pth` (gitignored).  
+Документация Kimi: `docs/hepatoscreen/`
+
 ## Тесты ML API
 
 ```powershell

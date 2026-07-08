@@ -1,0 +1,15 @@
+Multimodal evaluation (test split)
+========================================
+image_only: n=104 bal_acc=0.6683 f1=0.7568 auc=0.7026
+clinical_only: n=104 bal_acc=0.4903 f1=0.2277 auc=0.5059
+fusion_0.7_0.3: n=104 bal_acc=0.5183 f1=0.2483 auc=0.6463
+
+Source: mendeley_nfld
+  image_only: bal_acc=0.6667 auc=0.9091
+  clinical_only: bal_acc=0.4091 auc=0.6818
+  fusion_0.7_0.3: bal_acc=0.6212 auc=0.7576
+
+Source: zenodo
+  image_only: bal_acc=0.6679 auc=0.6850
+  clinical_only: bal_acc=0.5000 auc=0.5000
+  fusion_0.7_0.3: bal_acc=0.5000 auc=0.6850
