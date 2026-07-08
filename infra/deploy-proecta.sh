@@ -335,7 +335,7 @@ if ! run_proxy_smoke "http://127.0.0.1:${PROD_PORT}" "production"; then
   exit 1
 fi
 
-if [ -f "${REPO_ROOT}/infra/patch-nginx-buffers.sh" ]; then
+if [ -f "${REPO_ROOT}/infra/patch-nginx-buffers.sh" ] && [ -f /etc/nginx/sites-enabled/platform.cornea.kz ]; then
   sudo bash "${REPO_ROOT}/infra/patch-nginx-buffers.sh"
 fi
 
@@ -399,6 +399,10 @@ for site in platform.cornea.kz ml.cornea.kz screening.cornea.kz; do
 done
 sudo nginx -t
 sudo systemctl reload nginx
+
+if [ -f "${REPO_ROOT}/infra/patch-nginx-buffers.sh" ]; then
+  sudo bash "${REPO_ROOT}/infra/patch-nginx-buffers.sh"
+fi
 
 if command -v certbot >/dev/null 2>&1; then
   sudo certbot --nginx -d platform.cornea.kz -d ml.cornea.kz -d screening.cornea.kz \

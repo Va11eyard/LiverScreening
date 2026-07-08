@@ -2,7 +2,10 @@
 set -euo pipefail
 
 SITE=/etc/nginx/sites-enabled/platform.cornea.kz
-
+if [ ! -f "$SITE" ]; then
+  echo "skip: ${SITE} not installed yet"
+  exit 0
+fi
 sudo python3 <<'PY'
 from pathlib import Path
 p = Path("/etc/nginx/sites-enabled/platform.cornea.kz")
