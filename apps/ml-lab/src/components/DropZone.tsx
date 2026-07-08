@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ImagePlus, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -7,6 +7,11 @@ type Props = {
   preview: string | null;
   onFile: (file: File | null) => void;
 };
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  return `${Math.round(bytes / 1024)} KB`;
+}
 
 export function DropZone({ file, preview, onFile }: Props) {
   const [dragOver, setDragOver] = useState(false);
@@ -21,7 +26,6 @@ export function DropZone({ file, preview, onFile }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-slate-700">УЗИ печени</p>
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -34,18 +38,20 @@ export function DropZone({ file, preview, onFile }: Props) {
           handleFiles(e.dataTransfer.files);
         }}
         className={cn(
-          "relative flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-4 py-8 transition-colors",
-          dragOver ? "border-teal-500 bg-teal-50/50" : "border-slate-200 bg-slate-50/50",
+          "group relative flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-4 py-8 transition-all duration-200 ease-out",
+          dragOver
+            ? "scale-[1.01] border-teal-600 bg-teal-50/60"
+            : "border-slate-200 bg-slate-50/50",
         )}
       >
         <div className="flex size-12 items-center justify-center rounded-full bg-white shadow-sm">
-          <Upload className="size-5 text-teal-600" />
+          <Upload className="size-5 text-teal-600 group-hover:animate-bounce" />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-slate-700">Перетащите снимок или выберите файл</p>
           <p className="text-xs text-slate-500">PNG, JPG до 10 MB</p>
         </div>
-        <label className="cursor-pointer rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700">
+        <label className="cursor-pointer rounded-xl bg-linear-to-r from-teal-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 ease-out hover:shadow-md">
           Выбрать файл
           <input
             type="file"
@@ -54,11 +60,18 @@ export function DropZone({ file, preview, onFile }: Props) {
             onChange={(e) => handleFiles(e.target.files)}
           />
         </label>
-        {file && (
-          <p className="flex items-center gap-1 text-xs text-slate-600">
-            <ImagePlus className="size-3.5" />
-            {file.name}
-          </p>
+        {file && preview && (
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+            <img
+              src={preview}
+              alt=""
+              className="size-20 shrink-0 rounded-lg object-cover"
+            />
+            <div className="min-w-0 text-left">
+              <p className="truncate text-sm font-medium text-slate-700">{file.name}</p>
+              <p className="text-xs text-slate-500">({formatFileSize(file.size)})</p>
+            </div>
+          </div>
         )}
       </div>
       {preview && (

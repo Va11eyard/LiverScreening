@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Activity, Loader2 } from "lucide-react";
 
 import { checkHealth, runInference, triageClinical, type InferenceResult } from "./api";
 import { AnalysisSkeleton } from "@/components/AnalysisSkeleton";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ClinicalForm } from "@/components/ClinicalForm";
 import { DropZone } from "@/components/DropZone";
 import { ExplainOverlay } from "@/components/ExplainOverlay";
+import { FormSection } from "@/components/FormSection";
 import { MlLabHeader } from "@/components/MlLabHeader";
 import { MlLabTabs, type LabTab } from "@/components/MlLabTabs";
 import { ResultCard } from "@/components/ResultCard";
@@ -94,23 +95,40 @@ export default function App() {
       <MlLabHeader online={online} />
       <MlLabTabs tab={tab} onTab={setTab} />
 
-      <Card className="mb-6">
-        <form onSubmit={onSubmit} className="space-y-6">
-          <ClinicalForm
-            age={age}
-            ast={ast}
-            alt={alt}
-            platelets={platelets}
-            etiology={etiology}
-            hbv={hbv}
-            onAge={setAge}
-            onAst={setAst}
-            onAlt={setAlt}
-            onPlatelets={setPlatelets}
-            onEtiology={setEtiology}
-            onHbv={setHbv}
-          />
-          {tab === "full" && <DropZone file={file} preview={preview} onFile={setFile} />}
+      <form onSubmit={onSubmit} className="mb-6 space-y-5">
+        <ClinicalForm
+          age={age}
+          ast={ast}
+          alt={alt}
+          platelets={platelets}
+          etiology={etiology}
+          hbv={hbv}
+          onAge={setAge}
+          onAst={setAst}
+          onAlt={setAlt}
+          onPlatelets={setPlatelets}
+          onEtiology={setEtiology}
+          onHbv={setHbv}
+        />
+        {tab === "full" && (
+          <FormSection title="Визуализация" description="УЗИ-снимок печени для inference">
+            <DropZone file={file} preview={preview} onFile={setFile} />
+          </FormSection>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={loading} size="lg" className="w-full sm:w-auto">
+            {loading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Анализ…
+              </>
+            ) : (
+              <>
+                <Activity className="size-4" />
+                Запустить модель
+              </>
+            )}
+          </Button>
           {tab === "full" && (
             <Button
               type="button"
@@ -138,19 +156,9 @@ export default function App() {
               Загрузить пример NFLD
             </Button>
           )}
-          <Button type="submit" disabled={loading} size="lg" className="w-full sm:w-auto">
-            {loading ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Анализ…
-              </>
-            ) : (
-              "Запустить модель"
-            )}
-          </Button>
-          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-        </form>
-      </Card>
+        </div>
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+      </form>
 
       {loading && (
         <Card>

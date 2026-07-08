@@ -1,5 +1,8 @@
+import { ClinicalField } from "@/components/ClinicalField";
+import { FormSection } from "@/components/FormSection";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 type Props = {
   age: string;
@@ -31,41 +34,72 @@ export function ClinicalForm({
   onHbv,
 }: Props) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div className="space-y-2">
-        <Label htmlFor="age">Возраст</Label>
-        <Input id="age" type="number" value={age} onChange={(e) => onAge(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="ast">АСТ</Label>
-        <Input id="ast" type="number" value={ast} onChange={(e) => onAst(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="alt">АЛТ</Label>
-        <Input id="alt" type="number" value={alt} onChange={(e) => onAlt(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="platelets">Тромбоциты</Label>
-        <Input
-          id="platelets"
-          type="number"
-          value={platelets}
-          onChange={(e) => onPlatelets(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="etiology">Этиология</Label>
-        <Input id="etiology" value={etiology} onChange={(e) => onEtiology(e.target.value)} />
-      </div>
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-700 sm:col-span-2">
-        <input
-          type="checkbox"
-          checked={hbv}
-          onChange={(e) => onHbv(e.target.checked)}
-          className="size-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600"
-        />
-        ХВГ+
-      </label>
+    <div className="space-y-5">
+      <FormSection title="Демография" description="Базовые данные пациента">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ClinicalField
+            id="age"
+            label="Возраст"
+            fieldKey="age"
+            type="number"
+            value={age}
+            onChange={onAge}
+          />
+        </div>
+      </FormSection>
+
+      <FormSection title="Биохимия крови" description="Показатели для FIB-4 и APRI">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ClinicalField
+            id="ast"
+            label="АСТ"
+            fieldKey="ast"
+            type="number"
+            value={ast}
+            onChange={onAst}
+          />
+          <ClinicalField
+            id="alt"
+            label="АЛТ"
+            fieldKey="alt"
+            type="number"
+            value={alt}
+            onChange={onAlt}
+          />
+          <ClinicalField
+            id="platelets"
+            label="Тромбоциты"
+            fieldKey="platelets"
+            type="number"
+            value={platelets}
+            onChange={onPlatelets}
+          />
+        </div>
+      </FormSection>
+
+      <FormSection title="Клинический контекст" description="Этиология и факторы риска">
+        <div className="grid gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="etiology" className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Этиология
+            </Label>
+            <Input
+              id="etiology"
+              value={etiology}
+              onChange={(e) => onEtiology(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-100 bg-slate-50/50 px-4 py-3">
+            <div>
+              <Label htmlFor="hbv" className="text-sm font-medium text-slate-700">
+                ХВГ+
+              </Label>
+              <p className="text-xs text-slate-500">Хронический вирусный гепатит B</p>
+            </div>
+            <Switch id="hbv" checked={hbv} onCheckedChange={onHbv} />
+          </div>
+        </div>
+      </FormSection>
     </div>
   );
 }

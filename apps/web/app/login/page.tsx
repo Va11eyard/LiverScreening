@@ -50,7 +50,7 @@ export default function LoginPage() {
   }
 
   return (
-    <StaffAuthSplitLayout title="Вход" subtitle="Платформа клинического пилота Eye Eye AI">
+    <StaffAuthSplitLayout title="Вход" subtitle="Платформа клинического пилота HepatoScreen">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium text-hub-heading">
