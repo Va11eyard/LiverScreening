@@ -181,25 +181,26 @@ verify_web_release() {
   WEB_PORT="$port" WEB_URL="http://127.0.0.1:${port}" SMOKE_FULL_LOGIN="${3:-0}" bash "${REPO_ROOT}/infra/smoke-web-auth.sh"
 }
 
-STANDALONE_SRC=/opt/liverscreening-src/apps/web/.next/standalone/apps/web
-if [ ! -f "${STANDALONE_SRC}/server.js" ]; then
-  echo "ERROR: standalone server.js missing at ${STANDALONE_SRC}" >&2
+STANDALONE_ROOT=/opt/liverscreening-src/apps/web/.next/standalone
+STANDALONE_APP="${STANDALONE_ROOT}/apps/web"
+if [ ! -f "${STANDALONE_APP}/server.js" ]; then
+  echo "ERROR: standalone server.js missing at ${STANDALONE_APP}" >&2
   exit 1
 fi
 
 echo "Assembling web release in staging..."
 sudo rm -rf "$WEB_STAGING"
-sudo mkdir -p "$WEB_STAGING/.next"
-sudo cp -r "${STANDALONE_SRC}/." "$WEB_STAGING/"
-sudo cp -r /opt/liverscreening-src/apps/web/.next/static "$WEB_STAGING/.next/"
-sudo cp -r /opt/liverscreening-src/apps/web/public "$WEB_STAGING/public" 2>/dev/null || true
+sudo mkdir -p "$WEB_STAGING/apps/web/.next"
+sudo cp -r "${STANDALONE_ROOT}/." "$WEB_STAGING/"
+sudo cp -r /opt/liverscreening-src/apps/web/.next/static "$WEB_STAGING/apps/web/.next/"
+sudo cp -r /opt/liverscreening-src/apps/web/public "$WEB_STAGING/apps/web/public" 2>/dev/null || true
 sudo chown -R www-data:www-data "$WEB_STAGING"
 
-if [ ! -f "$WEB_STAGING/server.js" ]; then
+if [ ! -f "$WEB_STAGING/apps/web/server.js" ]; then
   echo "ERROR: staging server.js missing" >&2
   exit 1
 fi
-CSS_FILE=$(find "$WEB_STAGING/.next/static/chunks" -maxdepth 1 -name '*.css' | head -1)
+CSS_FILE=$(find "$WEB_STAGING/apps/web/.next/static/chunks" -maxdepth 1 -name '*.css' | head -1)
 if [ -z "$CSS_FILE" ]; then
   echo "ERROR: no CSS chunk in staging build" >&2
   exit 1
@@ -216,7 +217,7 @@ sudo chmod 600 "$WEB_STAGING/.env"
 
 echo "Starting staging web on port ${STAGING_PORT}..."
 stop_staging_web
-sudo -u www-data bash -c "set -a && source '${WEB_STAGING}/.env' && set +a && export PORT='${STAGING_PORT}' AUTH_URL='http://127.0.0.1:${STAGING_PORT}' && cd '${WEB_STAGING}' && exec node server.js" &
+sudo -u www-data bash -c "set -a && source '${WEB_STAGING}/.env' && set +a && export PORT='${STAGING_PORT}' AUTH_URL='http://127.0.0.1:${STAGING_PORT}' && cd '${WEB_STAGING}/apps/web' && exec node server.js" &
 echo $! > /tmp/liverscreening-web-staging.pid
 sleep 3
 
