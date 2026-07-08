@@ -56,7 +56,7 @@ NODE_ENV=production
 ENV
 
   sudo chmod 600 "$ENV_API" "$ENV_WEB"
-  sudo chown ubuntu:ubuntu "$ENV_API" "$ENV_WEB"
+  sudo chown www-data:www-data "$ENV_API" "$ENV_WEB"
   echo "Initial coordinator password (save securely): ${SEED_PASS}" >&2
 fi
 
@@ -92,6 +92,23 @@ sudo chmod 750 /var/log/liverscreening
 
 cd /opt/liverscreening-src
 sudo -u ubuntu env PATH="$PATH" CGO_ENABLED=0 go build -buildvcs=false -o /opt/liverscreening-api/liverscreening-api ./cmd/api
+
+echo "Running DB migrations..."
+set -a
+eval "$(sudo grep -v '^#' "$ENV_API" | sed 's/^/export /')"
+set +a
+sudo -u www-data env DATABASE_URL="$DATABASE_URL" JWT_SECRET="$JWT_SECRET" LISTEN_HOST=127.0.0.1 PORT=8089 \
+  /opt/liverscreening-api/liverscreening-api &
+MIGRATE_PID=$!
+for _ in $(seq 1 30); do
+  if curl -sf -o /dev/null http://127.0.0.1:8089/healthz 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+sudo kill "$MIGRATE_PID" 2>/dev/null || true
+wait "$MIGRATE_PID" 2>/dev/null || true
+sleep 1
 
 echo "Syncing pilot users (metadata only; passwords unchanged unless SEED_ROTATE_PASSWORDS=1)..."
 set -a
