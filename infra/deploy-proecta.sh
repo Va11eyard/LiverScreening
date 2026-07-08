@@ -98,6 +98,7 @@ set -a
 eval "$(sudo grep -v '^#' "$ENV_API" | sed 's/^/export /')"
 set +a
 sudo -u www-data env DATABASE_URL="$DATABASE_URL" JWT_SECRET="$JWT_SECRET" LISTEN_HOST=127.0.0.1 PORT=8089 \
+  UPLOAD_DIR=/opt/liverscreening-data/uploads APP_ENV=production \
   /opt/liverscreening-api/liverscreening-api &
 MIGRATE_PID=$!
 for _ in $(seq 1 30); do
@@ -124,7 +125,7 @@ sudo -u ubuntu env PATH="$PATH" \
 
 cd /opt/liverscreening-src/apps/web
 set -a
-source /opt/liverscreening-web/.env
+eval "$(sudo grep -v '^#' /opt/liverscreening-web/.env | sed 's/^/export /')"
 set +a
 if [ -f pnpm-workspace.yaml ] && ! grep -q '^packages:' pnpm-workspace.yaml; then
   mv pnpm-workspace.yaml pnpm-workspace.yaml.bak
