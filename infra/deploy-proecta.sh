@@ -349,6 +349,7 @@ fi
 echo "Deploy build complete (API healthz OK, auth smoke OK, proxy verify OK)"
 
 ML_API_ENV=/opt/liverscreening-ml-api/.env
+ML_API_VENV=/opt/liverscreening-ml-api/.venv
 ML_ROOT=/opt/liverscreening-ml-lab
 SCREEN_ROOT=/opt/liverscreening-screening
 
@@ -359,13 +360,15 @@ if [ ! -f "$ML_API_ENV" ]; then
   sudo chmod 600 "$ML_API_ENV"
   sudo chown www-data:www-data "$ML_API_ENV"
 fi
+sudo mkdir -p /opt/liverscreening-ml-api
+sudo chown www-data:www-data /opt/liverscreening-ml-api
 
 echo "Setting up ML API venv..."
 cd "${REPO_ROOT}/services/ml-api"
-if [ ! -d .venv ]; then
-  sudo -u www-data python3 -m venv .venv
+if [ ! -d "$ML_API_VENV" ]; then
+  sudo -u www-data python3 -m venv "$ML_API_VENV"
 fi
-sudo -u www-data .venv/bin/pip install -q -r requirements.txt -r requirements-cds.txt
+sudo -u www-data "$ML_API_VENV/bin/pip" install -q -r requirements.txt -r requirements-cds.txt
 sudo systemctl restart liverscreening-ml-api || sudo systemctl start liverscreening-ml-api
 
 echo "Building ML Lab and public screener..."
