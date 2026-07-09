@@ -8,7 +8,7 @@ import httpx
 from app.cds import PROTOCOLS
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
 SYSTEM_BASE = """Ты — клинический ассистент LiverScreening для врачей и пациентов в ПМСП Казахстана.
 Отвечай кратко на русском (3–6 предложений), без диагнозов — только скрининг и направление к врачу.

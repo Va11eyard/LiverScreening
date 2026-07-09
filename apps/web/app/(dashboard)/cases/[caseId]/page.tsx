@@ -29,8 +29,8 @@ const COMPARE_FIELDS: { key: CompareFieldKey; label: string; aiKey: string }[] =
   { key: "stage", label: "Фиброз (F)", aiKey: "stage" },
   { key: "plusDisease", label: "Стеатоз", aiKey: "plusDisease" },
   { key: "zone", label: "Триаж", aiKey: "zone" },
-  { key: "ropForm", label: "Эхоструктура", aiKey: "ropForm" },
-  { key: "preDiag", label: "Диагноз", aiKey: "preDiag" },
+  { key: "ropForm", label: "Морфология", aiKey: "ropForm" },
+  { key: "preDiag", label: "Клинический диагноз", aiKey: "preDiag" },
   { key: "aprop", label: "ХВГ", aiKey: "aprop" },
 ];
 
@@ -114,7 +114,7 @@ function caseSections(detail: CaseDetail): { title: string; items: DetailItem[] 
       items: [
         { label: "Аппарат", value: detail.camera },
         { label: "Качество", value: detail.imageQuality },
-        { label: "Эхоструктура", value: detail.ropForm },
+        { label: "Морфология", value: detail.ropForm },
       ],
     },
     {
@@ -122,8 +122,8 @@ function caseSections(detail: CaseDetail): { title: string; items: DetailItem[] 
       items: [
         { label: "Стеатоз", value: detail.plusDisease },
         { label: "Фиброз", value: detail.stage },
-        { label: "Триаж", value: detail.zone },
-        { label: "Диагноз", value: detail.preDiag },
+        { label: "Клинический диагноз", value: detail.preDiag },
+        { label: "Риск / тактика", value: detail.zone },
         { label: "Рекомендация", value: detail.recommendation },
         { label: "Визит", value: detail.visit },
       ],
@@ -341,10 +341,10 @@ export default function CaseDetailPage() {
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead>Поле</TableHead>
-                    <TableHead>Врач</TableHead>
+                    <TableHead>Заключение врача</TableHead>
                     <TableHead className="flex items-center gap-1">
                       <Bot className="h-3.5 w-3.5" />
-                      ИИ
+                      ИИ предполагает
                     </TableHead>
                   </TableRow>
                 </TableHeader>

@@ -81,3 +81,57 @@ body {
 button:not(:disabled) {
   cursor: pointer;
 }
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes landing-orb {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
+}
+
+.landing-float {
+  animation: landing-float 5s ease-in-out infinite;
+}
+
+.landing-orb {
+  animation: landing-orb 8s ease-in-out infinite;
+}
+
+.landing-orb-b {
+  animation-delay: -2s;
+}
+
+.landing-orb-c {
+  animation-delay: -4s;
+}
+
+.landing-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.landing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(20, 28, 46, 0.1);
+}
+
+.landing-wave {
+  margin-bottom: -1px;
+  line-height: 0;
+}

@@ -19,19 +19,19 @@ export const VISIT_OPTIONS = ["1-й скрининг", "2-й", "3-й", "Конт
 export const US_DEVICE_OPTIONS = ["Портативное УЗИ", "LOGIQ", "Mindray", "Другое"];
 
 export const STEATOSIS_OPTIONS: ChipOption[] = [
-  { value: "Нет / минимальный", label: "Нет / минимальный" },
-  { value: "Лёгкий", label: "Лёгкий", icon: TriangleAlert, iconClassName: "text-amber-500" },
-  { value: "Умеренный", label: "Умеренный", icon: CircleAlert, iconClassName: "text-orange-500" },
-  { value: "Выраженный", label: "Выраженный", icon: CircleX, iconClassName: "text-red-500" },
+  { value: "Нет / минимальный", label: "S0 — нет / минимальный" },
+  { value: "Лёгкий", label: "S1 — лёгкий", icon: TriangleAlert, iconClassName: "text-amber-500" },
+  { value: "Умеренный", label: "S2 — умеренный", icon: CircleAlert, iconClassName: "text-orange-500" },
+  { value: "Выраженный", label: "S3 — выраженный", icon: CircleX, iconClassName: "text-red-500" },
 ];
 
 export const FIBROSIS_STAGE_OPTIONS = ["F0", "F1", "F2", "F3", "F4", "Не определено"];
 
 export const TRIAGE_OPTIONS: ChipOption[] = [
-  { value: "Низкий риск", label: "Низкий риск", icon: CircleCheck, iconClassName: "text-emerald-600" },
-  { value: "Наблюдение", label: "Наблюдение", icon: TriangleAlert, iconClassName: "text-amber-500" },
-  { value: "Срочно", label: "Срочно", icon: CircleAlert, iconClassName: "text-orange-500" },
-  { value: "К гепатологу", label: "К гепатологу", icon: CircleX, iconClassName: "text-red-500" },
+  { value: "Низкий риск", label: "Низкий", icon: CircleCheck, iconClassName: "text-emerald-600" },
+  { value: "Наблюдение", label: "Требует наблюдения", icon: TriangleAlert, iconClassName: "text-amber-500" },
+  { value: "Срочно", label: "Срочная консультация", icon: CircleAlert, iconClassName: "text-orange-500" },
+  { value: "К гепатологу", label: "Направить к гепатологу", icon: CircleX, iconClassName: "text-red-500" },
 ];
 
 export const HBV_OPTIONS = ["Нет", "Да (ХВГ)", "Неизвестно"];
@@ -40,21 +40,24 @@ export const PRE_DIAG_OPTIONS = [
   "Норма",
   "Стеатоз",
   "MASLD",
-  "ХВГ",
   "Фиброз",
   "Цирроз",
+  "ХВГ",
   "Сомнительно",
 ];
 
-export const US_FINDING_OPTIONS = [
-  "Норма",
+export const MORPHOLOGY_OPTIONS = [
   "Гиперэхогенность",
-  "Неоднородная эхоструктура",
-  "Узел / очаг",
+  "Неоднородность",
+  "Узловое образование",
   "Асцит",
 ];
 
-export const CONFIDENCE_OPTIONS = ["Уверен", "Частично", "Сомневаюсь"];
+export const CONFIDENCE_OPTIONS: ChipOption[] = [
+  { value: "Уверен", label: "Высокая" },
+  { value: "Частично", label: "Средняя" },
+  { value: "Сомневаюсь", label: "Низкая" },
+];
 export const RECOMMENDATION_OPTIONS = [
   "Наблюдение в ПМСП",
   "Контроль 6 мес.",

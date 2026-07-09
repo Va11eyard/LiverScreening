@@ -50,7 +50,7 @@ function usConclusion(row: WeeklyReportRow): string {
   ) {
     return "Стеатоз";
   }
-  if (row.rop_form === "Норма") return "Норма";
+  if (!row.rop_form || row.rop_form === "Норма") return "Норма";
   return "—";
 }
 

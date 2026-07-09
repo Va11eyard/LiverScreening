@@ -1,5 +1,6 @@
 "use client";
 
+import { Bot } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -8,10 +9,11 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CaseImageUpload } from "@/components/case-image-upload";
+import { ChipCheckboxGroup } from "@/components/chip-checkbox-group";
 import { ChipGroup, ChipHint } from "@/components/chip-group";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateField } from "@/components/ui/date-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,12 +28,12 @@ import {
   FIBROSIS_STAGE_OPTIONS,
   HBV_OPTIONS,
   IMAGE_QUALITY_OPTIONS,
+  MORPHOLOGY_OPTIONS,
   PRE_DIAG_OPTIONS,
   RECOMMENDATION_OPTIONS,
   STEATOSIS_OPTIONS,
   TRIAGE_OPTIONS,
   US_DEVICE_OPTIONS,
-  US_FINDING_OPTIONS,
   VISIT_OPTIONS,
 } from "@/lib/case-chip-options";
 import { PILOT_HOSPITALS } from "@/lib/constants";
@@ -46,8 +48,48 @@ const COMORBIDITY_OPTIONS = [
   "Метаболический синдром",
 ];
 
+const LEGACY_MORPHOLOGY: Record<string, string> = {
+  "Неоднородная эхоструктура": "Неоднородность",
+  "Узел / очаг": "Узловое образование",
+};
+
+function parseMorphology(ropForm?: string): string[] {
+  if (!ropForm || ropForm.trim() === "Норма") return [];
+  return ropForm
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => LEGACY_MORPHOLOGY[s] ?? s)
+    .filter((s) => MORPHOLOGY_OPTIONS.includes(s));
+}
+
+function serializeMorphology(selected: string[]): string {
+  if (selected.length === 0) return "Норма";
+  return selected.join(", ");
+}
+
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <Label className="text-sm font-medium text-hub-heading">{children}</Label>;
+}
+
+function ConclusionSubsection({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3 rounded-xl border border-(--odos-input-border) bg-(--odos-input-bg-subtle)/60 p-4">
+      <div>
+        <h3 className="text-sm font-semibold text-hub-heading">{title}</h3>
+        {hint ? <p className="mt-1 text-xs text-hub-muted">{hint}</p> : null}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 type NewCaseFormState = {
@@ -125,6 +167,7 @@ function NewCaseForm({
   const initial = buildNewCaseFormState(templateCase, session);
   const router = useRouter();
   const [comorbidities, setComorbidities] = useState<string[]>(initial.comorbidities);
+  const [morphology, setMorphology] = useState<string[]>(parseMorphology(initial.chips.ropForm));
   const [chips, setChips] = useState<Record<string, string>>(initial.chips);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -163,6 +206,7 @@ function NewCaseForm({
     const raw = {
       ...values,
       ...chips,
+      ropForm: serializeMorphology(morphology),
       riskFactors: comorbidities.join(", "),
       stage: chips.stage ?? "",
     };
@@ -354,60 +398,95 @@ function NewCaseForm({
       <Card>
         <CardHeader>
           <CardTitle>3. Заключение врача</CardTitle>
+          <CardDescription>
+            Сначала морфология и стадии, затем клинический диагноз и тактика. ИИ сравнит своё предположение
+            с вашим заключением после загрузки УЗИ.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Эхоструктура</FieldLabel>
-            <ChipGroup options={US_FINDING_OPTIONS} value={chips.ropForm} onChange={(v) => setChip("ropForm", v)} />
+        <CardContent className="space-y-5">
+          <div className="flex gap-3 rounded-xl border border-dashed border-hub-cta/30 bg-(--odos-hub-cta-tint-10) p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-hub-cta shadow-sm">
+              <Bot className="size-5" />
+            </div>
+            <div className="min-w-0 text-sm">
+              <p className="font-semibold text-hub-heading">ИИ предполагает</p>
+              <p className="mt-1 text-hub-muted">
+                После отправки УЗИ модель предложит диагноз и стадию. В карте кейса вы увидите сравнение:
+                «ИИ предполагает» и «Заключение врача».
+              </p>
+            </div>
           </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Степень стеатоза</FieldLabel>
-            <ChipGroup
-              options={STEATOSIS_OPTIONS}
-              value={chips.plusDisease}
-              onChange={(v) => setChip("plusDisease", v)}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Стадия фиброза *</FieldLabel>
-            <ChipGroup
-              options={FIBROSIS_STAGE_OPTIONS}
-              value={chips.stage}
-              onChange={(v) => setChip("stage", v)}
-            />
-            <ChipHint show={!chips.stage} />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Риск</FieldLabel>
-            <ChipGroup options={TRIAGE_OPTIONS} value={chips.zone} onChange={(v) => setChip("zone", v)} />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Диагноз AI</FieldLabel>
-            <ChipGroup options={PRE_DIAG_OPTIONS} value={chips.preDiag} onChange={(v) => setChip("preDiag", v)} />
-          </div>
-          <div className="space-y-2">
-            <FieldLabel>Уверенность врача</FieldLabel>
-            <ChipGroup
-              options={CONFIDENCE_OPTIONS}
-              value={chips.confidence}
-              onChange={(v) => setChip("confidence", v)}
-            />
-          </div>
-          <div className="space-y-2">
-            <FieldLabel>Маршрут</FieldLabel>
-            <ChipGroup
-              options={RECOMMENDATION_OPTIONS}
-              value={chips.recommendation}
-              onChange={(v) => setChip("recommendation", v)}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Этап скрининга</FieldLabel>
-            <ChipGroup options={VISIT_OPTIONS} value={chips.visit} onChange={(v) => setChip("visit", v)} />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <FieldLabel>Примечания</FieldLabel>
-            <Textarea rows={3} {...form.register("notes")} />
+
+          <ConclusionSubsection
+            title="1. Морфологические признаки печени"
+            hint="Можно отметить несколько признаков одновременно. Если ничего не выбрано — считается норма."
+          >
+            <ChipCheckboxGroup options={MORPHOLOGY_OPTIONS} values={morphology} onChange={setMorphology} />
+          </ConclusionSubsection>
+
+          <ConclusionSubsection title="2. Оценка заболевания">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <FieldLabel>Степень стеатоза</FieldLabel>
+                <ChipGroup
+                  options={STEATOSIS_OPTIONS}
+                  value={chips.plusDisease}
+                  onChange={(v) => setChip("plusDisease", v)}
+                />
+              </div>
+              <div className="space-y-2">
+                <FieldLabel>Стадия фиброза *</FieldLabel>
+                <ChipGroup
+                  options={FIBROSIS_STAGE_OPTIONS}
+                  value={chips.stage}
+                  onChange={(v) => setChip("stage", v)}
+                />
+                <ChipHint show={!chips.stage} />
+              </div>
+            </div>
+          </ConclusionSubsection>
+
+          <ConclusionSubsection
+            title="3. Итоговое заключение"
+            hint="Диагноз → риск → уверенность — в клиническом порядке."
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <FieldLabel>Клинический диагноз</FieldLabel>
+                <ChipGroup options={PRE_DIAG_OPTIONS} value={chips.preDiag} onChange={(v) => setChip("preDiag", v)} />
+              </div>
+              <div className="space-y-2">
+                <FieldLabel>Риск / тактика</FieldLabel>
+                <ChipGroup options={TRIAGE_OPTIONS} value={chips.zone} onChange={(v) => setChip("zone", v)} />
+              </div>
+              <div className="space-y-2">
+                <FieldLabel>Уверенность врача</FieldLabel>
+                <ChipGroup
+                  options={CONFIDENCE_OPTIONS}
+                  value={chips.confidence}
+                  onChange={(v) => setChip("confidence", v)}
+                />
+              </div>
+            </div>
+          </ConclusionSubsection>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <FieldLabel>Маршрут</FieldLabel>
+              <ChipGroup
+                options={RECOMMENDATION_OPTIONS}
+                value={chips.recommendation}
+                onChange={(v) => setChip("recommendation", v)}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <FieldLabel>Этап скрининга</FieldLabel>
+              <ChipGroup options={VISIT_OPTIONS} value={chips.visit} onChange={(v) => setChip("visit", v)} />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <FieldLabel>Примечания</FieldLabel>
+              <Textarea rows={3} {...form.register("notes")} />
+            </div>
           </div>
         </CardContent>
       </Card>

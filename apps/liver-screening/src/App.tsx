@@ -4,13 +4,14 @@ import { ArrowLeft } from "lucide-react";
 import { LandingPage } from "@/components/LandingPage";
 import { LiverScreeningForm } from "@/components/LiverScreeningForm";
 import { ProtocolChat } from "@/components/ProtocolChat";
+import { ProtocolChatProvider } from "@/components/protocol-chat-context";
 import { Button } from "@/components/ui/button";
 
 export default function App() {
   const [view, setView] = useState<"landing" | "screen">("landing");
 
   return (
-    <>
+    <ProtocolChatProvider>
       {view === "landing" ? (
         <LandingPage onStart={() => setView("screen")} />
       ) : (
@@ -32,7 +33,7 @@ export default function App() {
           </div>
         </div>
       )}
-      <ProtocolChat />
-    </>
+      <ProtocolChat floatingPanel={view === "screen"} />
+    </ProtocolChatProvider>
   );
 }
