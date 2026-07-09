@@ -95,9 +95,14 @@ def binary_macro_auc(y_true: np.ndarray, y_prob: np.ndarray) -> float | None:
     return float(roc_auc_score(y_true, scores))
 
 def compute_val_auc(y_true: np.ndarray, y_prob: np.ndarray, num_classes: int) -> float | None:
+    if y_prob.size == 0 or not np.isfinite(y_prob).all():
+        return None
     if num_classes == 2:
         return binary_macro_auc(y_true, y_prob)
-    return macro_auc(y_true, y_prob, num_classes=num_classes)
+    try:
+        return macro_auc(y_true, y_prob, num_classes=num_classes)
+    except ValueError:
+        return None
 
 def save_candidate_metadata(
     ckpt_path: Path,
